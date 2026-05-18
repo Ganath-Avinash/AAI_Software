@@ -116,10 +116,10 @@ export const assets: Asset[] = Array.from({ length: 60 }).map((_, i) => {
     status,
     location: locations[i % locations.length],
     assignedTo,
-    specs: type === "Laptop" || type === "Desktop CPU" ? {
+    specs: (type === "Laptop" || type === "Desktop CPU" ? {
       CPU: "Intel Core i5-1235U", RAM: "16 GB DDR4", Storage: "512 GB SSD", OS: "Windows 11 Pro", GPU: "Intel Iris Xe"
     } : type === "Monitor" ? { Size: "24 inch", Resolution: "1920x1080", Panel: "IPS", Ports: "HDMI, VGA" }
-      : { Notes: "Standard issue peripheral" },
+      : { Notes: "Standard issue peripheral" }) as Record<string, string>,
     network: isNetworked ? {
       hostname: `AAI-${type.replace(/ /g,"")}-${pad(i,3)}`,
       ip: `10.${10 + (i % 20)}.${i % 255}.${(i * 7) % 255}`,
