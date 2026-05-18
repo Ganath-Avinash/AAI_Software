@@ -78,7 +78,7 @@ function UserDetail() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-            {assets.map(a => (
+            {(assets as any[]).map((a: any) => (
               <Link key={a.id} to="/assets/$id" params={{ id: a.id }}
                 className="border rounded-lg p-4 hover:border-primary hover:shadow-md transition-all group bg-card">
                 <div className="flex items-start justify-between">
