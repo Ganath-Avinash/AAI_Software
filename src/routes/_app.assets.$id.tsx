@@ -91,7 +91,7 @@ function AssetDetail() {
           <div className="p-5">
             {tab === "overview" && (
               <div className="grid sm:grid-cols-2 gap-4">
-                {Object.entries(asset.specs).map(([k, v]) => (
+                {Object.entries(asset.specs as Record<string,string>).map(([k, v]) => (
                   <div key={k} className="p-3 rounded-md bg-muted/40">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">{k}</div>
                     <div className="text-sm font-medium mt-0.5">{v}</div>
