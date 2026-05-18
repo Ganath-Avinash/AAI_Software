@@ -51,7 +51,7 @@ function AssetDetail() {
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-3">Assigned to</h3>
             {user ? (
               <Link to="/users/$id" params={{ id: user.id }} className="flex items-center gap-3 group">
-                <div className="size-10 rounded-full bg-primary/10 text-primary grid place-items-center text-sm font-semibold">{user.name.split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
+                <div className="size-10 rounded-full bg-primary/10 text-primary grid place-items-center text-sm font-semibold">{user.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
                 <div>
                   <div className="font-medium group-hover:text-primary">{user.name}</div>
                   <div className="text-xs text-muted-foreground">{user.department}</div>
@@ -124,7 +124,7 @@ function AssetDetail() {
             {tab === "software" && (
               asset.software ? (
                 <div className="divide-y border rounded-md">
-                  {asset.software.map(s => (
+                  {(asset.software as any[]).map((s: any) => (
                     <div key={s.name} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className="size-9 rounded-md bg-info/10 text-info grid place-items-center"><AppWindow className="size-4" /></div>
@@ -141,7 +141,7 @@ function AssetDetail() {
             )}
             {tab === "history" && (
               <ol className="relative border-l ml-3 space-y-6">
-                {asset.history.map((h, i) => (
+                {(asset.history as any[]).map((h: any, i: number) => (
                   <li key={i} className="ml-6">
                     <span className="absolute -left-1.5 size-3 rounded-full bg-primary border-2 border-card mt-1.5" />
                     <div className="text-xs text-muted-foreground">{h.date} · by {h.by}</div>

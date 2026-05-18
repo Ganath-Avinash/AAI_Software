@@ -26,7 +26,7 @@ function UserDetail() {
           <div className="flex items-end justify-between flex-wrap gap-4">
             <div className="flex items-end gap-4">
               <div className="size-24 rounded-xl bg-card border-4 border-card shadow text-primary grid place-items-center text-2xl font-bold">
-                {user.name.split(" ").map(n=>n[0]).join("").slice(0,2)}
+                {user.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}
               </div>
               <div className="pb-2">
                 <div className="flex items-center gap-2">
