@@ -58,7 +58,7 @@ function AssignPage() {
             <div className="grid sm:grid-cols-2 gap-2 max-h-[400px] overflow-auto">
               {users.map(u => (
                 <button key={u.id} onClick={() => setUserId(u.id)} className={`flex items-center gap-3 p-3 rounded-md border text-left hover:border-primary ${userId === u.id ? "border-primary bg-primary/5" : ""}`}>
-                  <div className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
+                  <div className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
                   <div><div className="font-medium text-sm">{u.name}</div><div className="text-xs text-muted-foreground">{u.department}</div></div>
                 </button>
               ))}

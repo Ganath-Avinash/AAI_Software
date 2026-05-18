@@ -66,7 +66,7 @@ function UsersList() {
                 <tr key={u.id} className="hover:bg-muted/30 group">
                   <td className="px-4 py-3">
                     <Link to="/users/$id" params={{ id: u.id }} className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map(n=>n[0]).join("").slice(0,2)}</div>
+                      <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
                       <div>
                         <div className="font-medium text-foreground group-hover:text-primary">{u.name}</div>
                         <div className="text-xs text-muted-foreground">{u.empId}</div>
