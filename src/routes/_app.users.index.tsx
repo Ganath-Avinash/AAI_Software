@@ -34,7 +34,17 @@ function UsersList() {
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {users.length} employees</p>
         </div>
-        <button className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
+        <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
+      </div>
+
+      <UserFormDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Add New User"
+        onSubmit={(data) => { addUser(data); setOpen(false); }}
+      />
+      <div className="hidden">
+
       </div>
 
       <div className="bg-card border rounded-lg">
