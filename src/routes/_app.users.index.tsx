@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { users } from "@/lib/mock-data";
-import { useState, useMemo } from "react";
+import { users, addUser, subscribe } from "@/lib/mock-data";
+import { useState, useMemo, useEffect, useReducer } from "react";
 import { Plus, Search, Filter } from "lucide-react";
+import { UserFormDialog } from "@/components/user-form-dialog";
 
 export const Route = createFileRoute("/_app/users/")({
   component: UsersList,
@@ -12,6 +13,10 @@ export const Route = createFileRoute("/_app/users/")({
 function UsersList() {
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
+  const [open, setOpen] = useState(false);
+  const [, force] = useReducer(x => x + 1, 0);
+  useEffect(() => subscribe(force), []);
+
 
   const filtered = useMemo(() => users.filter(u => {
     const matchesQ = !q || u.name.toLowerCase().includes(q.toLowerCase()) || u.empId.toLowerCase().includes(q.toLowerCase());
