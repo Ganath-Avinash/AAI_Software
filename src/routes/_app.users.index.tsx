@@ -15,7 +15,7 @@ function UsersList() {
   const [dept, setDept] = useState("all");
   const [open, setOpen] = useState(false);
   const [, force] = useReducer(x => x + 1, 0);
-  useEffect(() => subscribe(force), []);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
 
 
   const filtered = useMemo(() => users.filter(u => {
