@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getAsset, getUser } from "@/lib/mock-data";
-import { useState } from "react";
+import { getAsset, getUser, updateAsset, subscribe } from "@/lib/mock-data";
+import { useState, useEffect, useReducer } from "react";
 import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2 } from "lucide-react";
+import { AssetFormDialog } from "@/components/asset-form-dialog";
+
 
 export const Route = createFileRoute("/_app/assets/$id")({
   loader: ({ params }) => {
