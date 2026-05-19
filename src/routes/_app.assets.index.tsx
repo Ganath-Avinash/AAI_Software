@@ -5,12 +5,14 @@ import { assets, users, addAsset, subscribe } from "@/lib/mock-data";
 import { useState, useMemo, useEffect, useReducer } from "react";
 import { Plus, Search, Grid3x3, List } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_app/assets/")({
   component: AssetsList,
 });
 
 function AssetsList() {
+  const { role } = useAuth();
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
@@ -38,7 +40,9 @@ function AssetsList() {
           <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {assets.length} hardware items</p>
         </div>
-        <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+        {role === "admin" && (
+          <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+        )}
       </div>
       <AssetFormDialog
         open={open}

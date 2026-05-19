@@ -2,18 +2,28 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plane, Shield, Lock } from "lucide-react";
 import { useState } from "react";
 
+import { useAuth } from "@/lib/auth-context";
+
 export const Route = createFileRoute("/")({
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [u, setU] = useState("admin");
   const [p, setP] = useState("aai2026");
+  const [error, setError] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate({ to: "/dashboard" });
+    setError("");
+    const success = login(u, p);
+    if (success) {
+      navigate({ to: "/dashboard" });
+    } else {
+      setError("Invalid username or password.");
+    }
   };
 
   return (
@@ -62,6 +72,8 @@ function LoginPage() {
             <h2 className="text-2xl font-bold tracking-tight">Sign in to your account</h2>
             <p className="text-sm text-muted-foreground mt-1">Use your AAI domain credentials</p>
           </div>
+
+          {error && <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm font-medium">{error}</div>}
 
           <div className="space-y-4">
             <div>

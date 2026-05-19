@@ -1,10 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { users, assets, updateAsset } from "@/lib/mock-data";
 import { useState } from "react";
 import { Check, ArrowRight, User as UserIcon, HardDrive } from "lucide-react";
 
 export const Route = createFileRoute("/_app/assignments")({
+  beforeLoad: () => {
+    const role = localStorage.getItem("auth_role");
+    if (role !== "admin") throw redirect({ to: "/dashboard" });
+  },
   validateSearch: (search: Record<string, unknown>): { userId?: string } => ({
     userId: search.userId as string | undefined,
   }),

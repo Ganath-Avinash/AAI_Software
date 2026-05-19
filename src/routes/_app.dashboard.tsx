@@ -6,6 +6,7 @@ import {
   HardDrive, CheckCircle2, AlertTriangle, Network as NetIcon,
   Users as UsersIcon, ArrowRightLeft, Undo2, Wrench, TrendingUp, Plus
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -21,6 +22,7 @@ const statCards = [
 ];
 
 function Dashboard() {
+  const { role } = useAuth();
   const recentAssignments = assets.filter(a => a.assignedTo).slice(0, 5);
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -31,8 +33,12 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground mt-1">Here's what's happening across AAI IT infrastructure today.</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/assignments" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
-          <Link to="/assets" className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> New asset</Link>
+          {role === "admin" && (
+            <>
+              <Link to="/assignments" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
+              <Link to="/assets" className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> New asset</Link>
+            </>
+          )}
         </div>
       </div>
 

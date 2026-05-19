@@ -5,6 +5,7 @@ import { getAsset, getUser, updateAsset, subscribe } from "@/lib/mock-data";
 import { useState, useEffect, useReducer } from "react";
 import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2 } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
+import { useAuth } from "@/lib/auth-context";
 
 
 export const Route = createFileRoute("/_app/assets/$id")({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_app/assets/$id")({
 type Tab = "overview" | "network" | "software" | "history";
 
 function AssetDetail() {
+  const { role } = useAuth();
   const params = Route.useParams();
   const [, force] = useReducer((x: number) => x + 1, 0);
   useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
@@ -58,8 +60,12 @@ function AssetDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
-          {asset.assignedTo && <Link to="/withdrawals" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Undo2 className="size-4" /> Withdraw</Link>}
+          {role === "admin" && (
+            <>
+              <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
+              {asset.assignedTo && <Link to="/withdrawals" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Undo2 className="size-4" /> Withdraw</Link>}
+            </>
+          )}
         </div>
       </div>
 

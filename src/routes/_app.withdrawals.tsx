@@ -1,10 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { assets, users, updateAsset, subscribe } from "@/lib/mock-data";
 import { Undo2, Check } from "lucide-react";
 import { useState, useEffect, useReducer } from "react";
 
 export const Route = createFileRoute("/_app/withdrawals")({
+  beforeLoad: () => {
+    const role = localStorage.getItem("auth_role");
+    if (role !== "admin") throw redirect({ to: "/dashboard" });
+  },
   component: WithdrawPage,
 });
 

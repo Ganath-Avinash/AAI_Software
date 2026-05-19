@@ -5,12 +5,14 @@ import { users, addUser, subscribe } from "@/lib/mock-data";
 import { useState, useMemo, useEffect, useReducer } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import { UserFormDialog } from "@/components/user-form-dialog";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_app/users/")({
   component: UsersList,
 });
 
 function UsersList() {
+  const { role } = useAuth();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
   const [open, setOpen] = useState(false);
@@ -34,7 +36,9 @@ function UsersList() {
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {users.length} employees</p>
         </div>
-        <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
+        {role === "admin" && (
+          <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
+        )}
       </div>
 
       <UserFormDialog

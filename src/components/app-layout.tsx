@@ -1,10 +1,14 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, HardDrive, Network, AppWindow,
-  ArrowRightLeft, Undo2, BarChart3, Settings, Bell, Plane, LogOut, Info
+  ArrowRightLeft, Undo2, BarChart3, Settings, Plane, LogOut, Info, Key
 } from "lucide-react";
 import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
+import { NotificationsDropdown } from "@/components/notifications-dropdown";
+import { useState } from "react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +25,15 @@ const navItems = [
 
 export function AppLayout() {
   const pathname = useRouterState({ select: s => s.location.pathname });
+  const { role, logout } = useAuth();
+  const [passOpen, setPassOpen] = useState(false);
+
+  const filteredNavItems = navItems.filter(item => {
+    if (role === "regular" && ["/assignments", "/withdrawals", "/settings"].includes(item.to)) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -37,7 +50,7 @@ export function AppLayout() {
         </div>
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(item => {
+          {filteredNavItems.map(item => {
             const active = pathname === item.to || (item.to !== "/dashboard" && pathname.startsWith(item.to));
             return (
               <Link key={item.to} to={item.to}
@@ -54,8 +67,11 @@ export function AppLayout() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-sidebar-border">
-          <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50">
+        <div className="p-3 border-t border-sidebar-border space-y-1">
+          <button onClick={() => setPassOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 text-left">
+            <Key className="size-4" /> Change password
+          </button>
+          <Link to="/" onClick={logout} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50">
             <LogOut className="size-4" /> Sign out
           </Link>
         </div>
@@ -65,16 +81,17 @@ export function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b bg-card flex items-center gap-4 px-6">
           <GlobalSearch />
-          <button className="size-9 grid place-items-center rounded-md hover:bg-accent relative">
-            <Bell className="size-4" />
-            <span className="absolute top-2 right-2 size-1.5 rounded-full bg-destructive" />
-          </button>
+          <NotificationsDropdown />
           <div className="flex items-center gap-3 pl-4 border-l">
             <div className="text-right">
-              <div className="text-sm font-medium leading-tight">Admin User</div>
+              <div className="text-sm font-medium leading-tight">
+                {role === "admin" ? "Admin User" : "Regular User"}
+              </div>
               <div className="text-xs text-muted-foreground">IT Operations</div>
             </div>
-            <div className="size-9 rounded-full bg-primary text-primary-foreground grid place-items-center text-sm font-semibold">AU</div>
+            <div className="size-9 rounded-full bg-primary text-primary-foreground grid place-items-center text-sm font-semibold">
+              {role === "admin" ? "AU" : "RU"}
+            </div>
           </div>
         </header>
 
@@ -82,6 +99,8 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      <ChangePasswordDialog open={passOpen} onOpenChange={setPassOpen} />
     </div>
   );
 }

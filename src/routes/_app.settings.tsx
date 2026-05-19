@@ -1,7 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const Route = createFileRoute("/_app/settings")({
+  beforeLoad: () => {
+    const role = localStorage.getItem("auth_role");
+    if (role !== "admin") throw redirect({ to: "/dashboard" });
+  },
   component: SettingsPage,
 });
 

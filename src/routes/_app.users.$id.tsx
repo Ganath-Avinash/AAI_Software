@@ -5,6 +5,7 @@ import { getUser, getUserAssets, updateUser, subscribe } from "@/lib/mock-data";
 import { Mail, MapPin, Phone, Building2, BadgeCheck, Edit, ArrowRightLeft, HardDrive } from "lucide-react";
 import { useState, useEffect, useReducer } from "react";
 import { UserFormDialog } from "@/components/user-form-dialog";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/_app/users/$id")({
   loader: ({ params }) => {
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_app/users/$id")({
 });
 
 function UserDetail() {
+  const { role } = useAuth();
   const params = Route.useParams();
   const [, force] = useReducer((x: number) => x + 1, 0);
   const [editOpen, setEditOpen] = useState(false);
@@ -52,8 +54,12 @@ function UserDetail() {
               </div>
             </div>
             <div className="flex gap-2 pb-2">
-              <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
-              <Link to="/assignments" search={{ userId: user.id }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
+              {role === "admin" && (
+                <>
+                  <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
+                  <Link to="/assignments" search={{ userId: user.id }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
+                </>
+              )}
             </div>
           </div>
 
