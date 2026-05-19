@@ -32,6 +32,17 @@ function AssetDetail() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Assets", to: "/assets" }, { label: asset.id }]} />
+      <AssetFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Edit Asset"
+        initial={asset}
+        onSubmit={(data) => {
+          updateAsset(asset.id, { ...data, assignedTo: data.assignedTo || null });
+          setEditOpen(false);
+        }}
+      />
+
 
       <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
