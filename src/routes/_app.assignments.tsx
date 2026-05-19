@@ -1,19 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { users, assets } from "@/lib/mock-data";
+import { users, assets, updateAsset } from "@/lib/mock-data";
 import { useState } from "react";
 import { Check, ArrowRight, User as UserIcon, HardDrive } from "lucide-react";
 
 export const Route = createFileRoute("/_app/assignments")({
+  validateSearch: (search: Record<string, unknown>): { userId?: string } => ({
+    userId: search.userId as string | undefined,
+  }),
   component: AssignPage,
 });
 
 function AssignPage() {
-  const [step, setStep] = useState(1);
-  const [userId, setUserId] = useState<string>("");
-  const [assetId, setAssetId] = useState<string>("");
+  const { userId: initialUserId } = Route.useSearch();
+  const [step, setStep] = useState(initialUserId ? 2 : 1);
+  const [userId, setUserId] = useState<string>(initialUserId || "");
+  const [assetIds, setAssetIds] = useState<string[]>([]);
   const available = assets.filter(a => a.status === "Available");
   const done = step === 4;
+
+  const assetTypes = Array.from(new Set(available.map(a => a.type)));
+  const [selectedType, setSelectedType] = useState<string>(assetTypes[0] || "");
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -44,10 +51,10 @@ function AssignPage() {
           <div className="text-center space-y-3 py-10">
             <div className="size-14 rounded-full bg-success/10 text-success grid place-items-center mx-auto"><Check className="size-7" /></div>
             <h2 className="text-xl font-semibold">Assignment confirmed</h2>
-            <p className="text-sm text-muted-foreground">{assets.find(a=>a.id===assetId)?.model} has been assigned to {users.find(u=>u.id===userId)?.name}.</p>
+            <p className="text-sm text-muted-foreground">{assetIds.length} asset(s) have been assigned to {users.find(u=>u.id===userId)?.name}.</p>
             <div className="flex justify-center gap-2 pt-2">
-              <button onClick={() => { setStep(1); setUserId(""); setAssetId(""); }} className="h-9 px-3 rounded-md border bg-card text-sm">New assignment</button>
-              <Link to="/assets/$id" params={{ id: assetId }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center">View asset</Link>
+              <button onClick={() => { setStep(initialUserId ? 2 : 1); setUserId(initialUserId || ""); setAssetIds([]); }} className="h-9 px-3 rounded-md border bg-card text-sm">New assignment</button>
+              <Link to="/users/$id" params={{ id: userId }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center">View user</Link>
             </div>
           </div>
         )}
@@ -67,13 +74,27 @@ function AssignPage() {
         )}
 
         {step === 2 && (
-          <div className="space-y-2">
-            <h3 className="font-semibold mb-3">Choose an available asset</h3>
-            <div className="grid sm:grid-cols-2 gap-2 max-h-[400px] overflow-auto">
-              {available.map(a => (
-                <button key={a.id} onClick={() => setAssetId(a.id)} className={`flex items-center gap-3 p-3 rounded-md border text-left hover:border-primary ${assetId === a.id ? "border-primary bg-primary/5" : ""}`}>
+          <div className="space-y-4">
+            <h3 className="font-semibold">Choose available assets</h3>
+            <div className="flex flex-wrap gap-2">
+              {assetTypes.map(type => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${selectedType === type ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-accent text-muted-foreground"}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2 max-h-[300px] overflow-auto pr-2">
+              {available.filter(a => a.type === selectedType).map(a => (
+                <button key={a.id} onClick={() => setAssetIds(prev => prev.includes(a.id) ? prev.filter(id => id !== a.id) : [...prev, a.id])} className={`flex items-center gap-3 p-3 rounded-md border text-left hover:border-primary ${assetIds.includes(a.id) ? "border-primary bg-primary/5" : ""}`}>
+                  <div className={`size-5 rounded border grid place-items-center ${assetIds.includes(a.id) ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+                    {assetIds.includes(a.id) && <Check className="size-3" />}
+                  </div>
                   <div className="size-9 rounded-md bg-info/10 text-info grid place-items-center"><HardDrive className="size-4" /></div>
-                  <div><div className="font-medium text-sm">{a.id}</div><div className="text-xs text-muted-foreground">{a.type} · {a.model}</div></div>
+                  <div><div className="font-medium text-sm">{a.id}</div><div className="text-xs text-muted-foreground">{a.model}</div></div>
                 </button>
               ))}
             </div>
@@ -84,15 +105,24 @@ function AssignPage() {
           <div className="space-y-4">
             <h3 className="font-semibold">Review assignment</h3>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-md bg-muted/40">
+              <div className="p-4 rounded-md bg-muted/40 h-fit">
                 <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><UserIcon className="size-3" /> Employee</div>
                 <div className="mt-1 font-semibold">{users.find(u=>u.id===userId)?.name}</div>
                 <div className="text-xs text-muted-foreground">{users.find(u=>u.id===userId)?.department}</div>
               </div>
-              <div className="p-4 rounded-md bg-muted/40">
-                <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><HardDrive className="size-3" /> Asset</div>
-                <div className="mt-1 font-semibold">{assets.find(a=>a.id===assetId)?.id}</div>
-                <div className="text-xs text-muted-foreground">{assets.find(a=>a.id===assetId)?.model}</div>
+              <div className="space-y-2">
+                <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><HardDrive className="size-3" /> Assets ({assetIds.length})</div>
+                <div className="max-h-[200px] overflow-auto space-y-2 pr-2">
+                  {assetIds.map(id => {
+                    const a = assets.find(x => x.id === id);
+                    return (
+                      <div key={id} className="p-3 rounded-md bg-muted/40">
+                        <div className="font-semibold text-sm">{a?.id}</div>
+                        <div className="text-xs text-muted-foreground">{a?.type} · {a?.model}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">By confirming, an entry will be recorded in the audit log and an email notification will be sent.</p>
@@ -102,8 +132,15 @@ function AssignPage() {
 
       {!done && (
         <div className="flex justify-between">
-          <button onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1} className="h-9 px-3 rounded-md border bg-card text-sm disabled:opacity-50">Back</button>
-          <button onClick={() => setStep(s => s + 1)} disabled={(step === 1 && !userId) || (step === 2 && !assetId)} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+          <button onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1 || (step === 2 && !!initialUserId)} className="h-9 px-3 rounded-md border bg-card text-sm disabled:opacity-50">Back</button>
+          <button onClick={() => {
+            if (step === 3) {
+              assetIds.forEach(id => updateAsset(id, { status: "Assigned", assignedTo: userId }));
+              setStep(4);
+            } else {
+              setStep(s => s + 1);
+            }
+          }} disabled={(step === 1 && !userId) || (step === 2 && assetIds.length === 0)} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50">
             {step === 3 ? "Confirm assignment" : "Continue"} <ArrowRight className="size-4" />
           </button>
         </div>

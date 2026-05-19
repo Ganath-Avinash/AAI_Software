@@ -1,16 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { assets, users } from "@/lib/mock-data";
-import { Undo2 } from "lucide-react";
-import { useState } from "react";
+import { assets, users, updateAsset, subscribe } from "@/lib/mock-data";
+import { Undo2, Check } from "lucide-react";
+import { useState, useEffect, useReducer } from "react";
 
 export const Route = createFileRoute("/_app/withdrawals")({
   component: WithdrawPage,
 });
 
 function WithdrawPage() {
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+
   const [selected, setSelected] = useState<string>("");
+  const [success, setSuccess] = useState(false);
   const assigned = assets.filter(a => a.assignedTo);
+
+  const handleWithdraw = () => {
+    updateAsset(selected, { status: "Available", assignedTo: null });
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+      setSelected("");
+    }, 2000);
+  };
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -62,7 +75,13 @@ function WithdrawPage() {
                 <span className="text-xs font-medium">Notes</span>
                 <textarea rows={3} className="mt-1 w-full p-2 rounded-md border bg-background text-sm" placeholder="Optional notes…" />
               </label>
-              <button className="w-full h-9 rounded-md bg-destructive text-destructive-foreground text-sm font-medium">Confirm withdrawal</button>
+              {success ? (
+                <div className="w-full h-9 rounded-md bg-success/10 text-success text-sm font-medium flex items-center justify-center gap-2 border border-success/20">
+                  <Check className="size-4" /> Withdrawn successfully
+                </div>
+              ) : (
+                <button onClick={handleWithdraw} className="w-full h-9 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors">Confirm withdrawal</button>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Select an asset on the left to begin.</p>

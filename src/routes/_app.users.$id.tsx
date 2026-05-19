@@ -53,7 +53,7 @@ function UserDetail() {
             </div>
             <div className="flex gap-2 pb-2">
               <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
-              <Link to="/assignments" className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
+              <Link to="/assignments" search={{ userId: user.id }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
             </div>
           </div>
 
