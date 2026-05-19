@@ -74,12 +74,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "AAI Asset Manager" },
       { name: "description", content: "Created by Interns of AAI for Asset Managements" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "author", content: "AAI" },
+      { property: "og:title", content: "AAI Asset Manager" },
+      { property: "og:description", content: "Created by Interns of AAI for Asset Managements" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@AAI" },
     ],
     links: [
       {
