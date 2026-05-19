@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { assets, users } from "@/lib/mock-data";
-import { useState, useMemo } from "react";
+import { assets, users, addAsset, subscribe } from "@/lib/mock-data";
+import { useState, useMemo, useEffect, useReducer } from "react";
 import { Plus, Search, Grid3x3, List } from "lucide-react";
+import { AssetFormDialog } from "@/components/asset-form-dialog";
 
 export const Route = createFileRoute("/_app/assets/")({
   component: AssetsList,
@@ -14,6 +15,10 @@ function AssetsList() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [view, setView] = useState<"table" | "grid">("table");
+  const [open, setOpen] = useState(false);
+  const [, force] = useReducer(x => x + 1, 0);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+
 
   const filtered = useMemo(() => assets.filter(a => {
     const lower = q.toLowerCase();
