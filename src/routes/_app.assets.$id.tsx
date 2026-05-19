@@ -47,7 +47,7 @@ function AssetDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
+          <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
           {asset.assignedTo && <Link to="/withdrawals" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Undo2 className="size-4" /> Withdraw</Link>}
         </div>
       </div>
