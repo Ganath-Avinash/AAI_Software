@@ -43,7 +43,7 @@ function UsersList() {
         title="Add New User"
         onSubmit={(data) => { addUser(data); setOpen(false); }}
       />
-      <div className="hidden">
+      
 
       </div>
 
