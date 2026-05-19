@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, HardDrive, Network, AppWindow,
-  ArrowRightLeft, Undo2, BarChart3, Settings, Bell, Plane, LogOut
+  ArrowRightLeft, Undo2, BarChart3, Settings, Bell, Plane, LogOut, Info
 } from "lucide-react";
 import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/withdrawals", label: "Withdrawals", icon: Undo2 },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/credits", label: "Credits", icon: Info },
 ];
 
 export function AppLayout() {

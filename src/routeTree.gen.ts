@@ -17,6 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppNetworkRouteImport } from './routes/_app.network'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCreditsRouteImport } from './routes/_app.credits'
 import { Route as AppAssignmentsRouteImport } from './routes/_app.assignments'
 import { Route as AppUsersIndexRouteImport } from './routes/_app.users.index'
 import { Route as AppAssetsIndexRouteImport } from './routes/_app.assets.index'
@@ -62,6 +63,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCreditsRoute = AppCreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAssignmentsRoute = AppAssignmentsRouteImport.update({
   id: '/assignments',
   path: '/assignments',
@@ -91,6 +97,7 @@ const AppAssetsIdRoute = AppAssetsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assignments': typeof AppAssignmentsRoute
+  '/credits': typeof AppCreditsRoute
   '/dashboard': typeof AppDashboardRoute
   '/network': typeof AppNetworkRoute
   '/reports': typeof AppReportsRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assignments': typeof AppAssignmentsRoute
+  '/credits': typeof AppCreditsRoute
   '/dashboard': typeof AppDashboardRoute
   '/network': typeof AppNetworkRoute
   '/reports': typeof AppReportsRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/_app/assignments': typeof AppAssignmentsRoute
+  '/_app/credits': typeof AppCreditsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/network': typeof AppNetworkRoute
   '/_app/reports': typeof AppReportsRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/assignments'
+    | '/credits'
     | '/dashboard'
     | '/network'
     | '/reports'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/assignments'
+    | '/credits'
     | '/dashboard'
     | '/network'
     | '/reports'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/_app/assignments'
+    | '/_app/credits'
     | '/_app/dashboard'
     | '/_app/network'
     | '/_app/reports'
@@ -241,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/credits': {
+      id: '/_app/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof AppCreditsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/assignments': {
       id: '/_app/assignments'
       path: '/assignments'
@@ -281,6 +300,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAssignmentsRoute: typeof AppAssignmentsRoute
+  AppCreditsRoute: typeof AppCreditsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppNetworkRoute: typeof AppNetworkRoute
   AppReportsRoute: typeof AppReportsRoute
@@ -295,6 +315,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAssignmentsRoute: AppAssignmentsRoute,
+  AppCreditsRoute: AppCreditsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppNetworkRoute: AppNetworkRoute,
   AppReportsRoute: AppReportsRoute,
