@@ -17,10 +17,23 @@ export const Route = createFileRoute("/_app/users/$id")({
 });
 
 function UserDetail() {
-  const { user, assets } = Route.useLoaderData();
+  const params = Route.useParams();
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  const [editOpen, setEditOpen] = useState(false);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+  const user = getUser(params.id)!;
+  const assets = getUserAssets(user.id);
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Users", to: "/users" }, { label: user.name }]} />
+      <UserFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Edit User"
+        initial={user}
+        onSubmit={(data) => { updateUser(user.id, data); setEditOpen(false); }}
+      />
+
 
       <div className="bg-card border rounded-lg overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-primary to-sidebar-accent" />
