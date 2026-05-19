@@ -20,8 +20,14 @@ export const Route = createFileRoute("/_app/assets/$id")({
 type Tab = "overview" | "network" | "software" | "history";
 
 function AssetDetail() {
-  const { asset, user } = Route.useLoaderData();
+  const params = Route.useParams();
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+  const asset = getAsset(params.id)!;
+  const user = asset.assignedTo ? getUser(asset.assignedTo) : null;
   const [tab, setTab] = useState<Tab>("overview");
+  const [editOpen, setEditOpen] = useState(false);
+
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
