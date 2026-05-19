@@ -38,8 +38,18 @@ function AssetsList() {
           <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {assets.length} hardware items</p>
         </div>
-        <button className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+        <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
       </div>
+      <AssetFormDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Add New Asset"
+        onSubmit={(data) => {
+          addAsset({ ...data, assignedTo: data.assignedTo || null });
+          setOpen(false);
+        }}
+      />
+
 
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b flex flex-wrap gap-3 items-center">
