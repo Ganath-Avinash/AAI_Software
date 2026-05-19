@@ -45,7 +45,6 @@ function UsersList() {
       />
       
 
-      </div>
 
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b flex flex-wrap gap-3 items-center">
