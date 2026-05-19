@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getAsset, getUser } from "@/lib/mock-data";
-import { useState } from "react";
+import { getAsset, getUser, updateAsset, subscribe } from "@/lib/mock-data";
+import { useState, useEffect, useReducer } from "react";
 import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2 } from "lucide-react";
+import { AssetFormDialog } from "@/components/asset-form-dialog";
+
 
 export const Route = createFileRoute("/_app/assets/$id")({
   loader: ({ params }) => {
@@ -18,12 +20,29 @@ export const Route = createFileRoute("/_app/assets/$id")({
 type Tab = "overview" | "network" | "software" | "history";
 
 function AssetDetail() {
-  const { asset, user } = Route.useLoaderData();
+  const params = Route.useParams();
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+  const asset = getAsset(params.id)!;
+  const user = asset.assignedTo ? getUser(asset.assignedTo) : null;
   const [tab, setTab] = useState<Tab>("overview");
+  const [editOpen, setEditOpen] = useState(false);
+
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Assets", to: "/assets" }, { label: asset.id }]} />
+      <AssetFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Edit Asset"
+        initial={asset}
+        onSubmit={(data) => {
+          updateAsset(asset.id, { ...data, assignedTo: data.assignedTo || null });
+          setEditOpen(false);
+        }}
+      />
+
 
       <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
@@ -39,7 +58,7 @@ function AssetDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
+          <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
           {asset.assignedTo && <Link to="/withdrawals" className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Undo2 className="size-4" /> Withdraw</Link>}
         </div>
       </div>

@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { assets, users } from "@/lib/mock-data";
-import { useState, useMemo } from "react";
+import { assets, users, addAsset, subscribe } from "@/lib/mock-data";
+import { useState, useMemo, useEffect, useReducer } from "react";
 import { Plus, Search, Grid3x3, List } from "lucide-react";
+import { AssetFormDialog } from "@/components/asset-form-dialog";
 
 export const Route = createFileRoute("/_app/assets/")({
   component: AssetsList,
@@ -14,6 +15,10 @@ function AssetsList() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [view, setView] = useState<"table" | "grid">("table");
+  const [open, setOpen] = useState(false);
+  const [, force] = useReducer(x => x + 1, 0);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+
 
   const filtered = useMemo(() => assets.filter(a => {
     const lower = q.toLowerCase();
@@ -33,8 +38,18 @@ function AssetsList() {
           <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {assets.length} hardware items</p>
         </div>
-        <button className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+        <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
       </div>
+      <AssetFormDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Add New Asset"
+        onSubmit={(data) => {
+          addAsset({ ...data, assignedTo: data.assignedTo || null });
+          setOpen(false);
+        }}
+      />
+
 
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b flex flex-wrap gap-3 items-center">

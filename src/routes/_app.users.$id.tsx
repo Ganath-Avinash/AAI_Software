@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getUser, getUserAssets } from "@/lib/mock-data";
+import { getUser, getUserAssets, updateUser, subscribe } from "@/lib/mock-data";
 import { Mail, MapPin, Phone, Building2, BadgeCheck, Edit, ArrowRightLeft, HardDrive } from "lucide-react";
+import { useState, useEffect, useReducer } from "react";
+import { UserFormDialog } from "@/components/user-form-dialog";
 
 export const Route = createFileRoute("/_app/users/$id")({
   loader: ({ params }) => {
@@ -15,10 +17,23 @@ export const Route = createFileRoute("/_app/users/$id")({
 });
 
 function UserDetail() {
-  const { user, assets } = Route.useLoaderData();
+  const params = Route.useParams();
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  const [editOpen, setEditOpen] = useState(false);
+  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+  const user = getUser(params.id)!;
+  const assets = getUserAssets(user.id);
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Users", to: "/users" }, { label: user.name }]} />
+      <UserFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Edit User"
+        initial={user}
+        onSubmit={(data) => { updateUser(user.id, data); setEditOpen(false); }}
+      />
+
 
       <div className="bg-card border rounded-lg overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-primary to-sidebar-accent" />
@@ -37,7 +52,7 @@ function UserDetail() {
               </div>
             </div>
             <div className="flex gap-2 pb-2">
-              <button className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
+              <button onClick={() => setEditOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2"><Edit className="size-4" /> Edit</button>
               <Link to="/assignments" className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><ArrowRightLeft className="size-4" /> Assign asset</Link>
             </div>
           </div>
