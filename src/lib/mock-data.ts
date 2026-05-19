@@ -162,6 +162,70 @@ export function getUser(id: string) { return users.find(u => u.id === id); }
 export function getAsset(id: string) { return assets.find(a => a.id === id); }
 export function getUserAssets(userId: string) { return assets.filter(a => a.assignedTo === userId); }
 
+// ---- simple in-memory CRUD + subscription so UI can react to changes ----
+const listeners = new Set<() => void>();
+export function subscribe(fn: () => void) { listeners.add(fn); return () => listeners.delete(fn); }
+function notify() { listeners.forEach(l => l()); }
+
+function nextUserId() {
+  const max = users.reduce((m, u) => Math.max(m, parseInt(u.id.slice(1)) || 0), 0);
+  return `U${pad(max + 1)}`;
+}
+function nextAssetId() {
+  const max = assets.reduce((m, a) => {
+    const n = parseInt(a.id.split("-").pop() || "0");
+    return Math.max(m, n);
+  }, 0);
+  return `AAI-AST-${pad(max + 1)}`;
+}
+
+export function addUser(data: Omit<User, "id" | "assetIds">) {
+  const u: User = { ...data, id: nextUserId(), assetIds: [] };
+  users.push(u);
+  notify();
+  return u;
+}
+export function updateUser(id: string, data: Partial<Omit<User, "id" | "assetIds">>) {
+  const u = users.find(x => x.id === id);
+  if (!u) return null;
+  Object.assign(u, data);
+  notify();
+  return u;
+}
+export function addAsset(data: Omit<Asset, "id" | "history" | "specs"> & { specs?: Record<string, string> }) {
+  const a: Asset = {
+    ...data,
+    id: nextAssetId(),
+    specs: data.specs ?? {},
+    history: [{ date: new Date().toISOString().slice(0, 10), action: "Asset created", by: "Admin" }],
+  };
+  assets.push(a);
+  if (a.assignedTo) {
+    const u = users.find(x => x.id === a.assignedTo);
+    if (u && !u.assetIds.includes(a.id)) u.assetIds.push(a.id);
+  }
+  notify();
+  return a;
+}
+export function updateAsset(id: string, data: Partial<Omit<Asset, "id">>) {
+  const a = assets.find(x => x.id === id);
+  if (!a) return null;
+  const prevAssignee = a.assignedTo;
+  Object.assign(a, data);
+  if (prevAssignee !== a.assignedTo) {
+    if (prevAssignee) {
+      const pu = users.find(x => x.id === prevAssignee);
+      if (pu) pu.assetIds = pu.assetIds.filter(x => x !== a.id);
+    }
+    if (a.assignedTo) {
+      const nu = users.find(x => x.id === a.assignedTo);
+      if (nu && !nu.assetIds.includes(a.id)) nu.assetIds.push(a.id);
+    }
+  }
+  notify();
+  return a;
+}
+
 export const stats = {
   total: assets.length,
   assigned: assets.filter(a => a.status === "Assigned").length,
