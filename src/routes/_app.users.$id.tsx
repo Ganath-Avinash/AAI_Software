@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getUser, getUserAssets } from "@/lib/mock-data";
+import { getUser, getUserAssets, updateUser, subscribe } from "@/lib/mock-data";
 import { Mail, MapPin, Phone, Building2, BadgeCheck, Edit, ArrowRightLeft, HardDrive } from "lucide-react";
+import { useState, useEffect, useReducer } from "react";
+import { UserFormDialog } from "@/components/user-form-dialog";
 
 export const Route = createFileRoute("/_app/users/$id")({
   loader: ({ params }) => {
