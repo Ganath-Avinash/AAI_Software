@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Linkedin, Mail, ExternalLink, Code2 } from "lucide-react";
+import { Linkedin, Mail, ExternalLink, Code2, Github } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,13 +24,17 @@ const interns = [
     }
   },
   {
-    name: "Future Intern",
-    role: "Full Stack Developer",
-    education: "TBD",
-    experience: "TBD",
-    bio: "Join the team to leave your mark on AAI ITAM.",
-    skills: ["Learning", "Growth"],
-    contact: {}
+    name: "Chetan Kumar G",
+    role: "Frontend Developer",
+    education: "B.Tech CSE – Amrita Vishwa Vidyapeetham",
+    experience: "2+ years Frontend Development",
+    bio: "Passionate developer interested in Full Stack Development, AR/VR, and innovative tech solutions. Always learning new technologies and building real-world projects.",
+    skills: ["React", "HTML", "CSS", "JavaScript", "TypeScript", "Node JS", "Express JS", "MongoDB", "MySQL", "PostgreSQL", "Git", "GitHub", "Unity"],
+    contact: {
+      email: "chetankumarg210307@gmail.com",
+      linkedin: "https://linkedin.com/in/chetan-kumar-g-7275743b2",
+      github: "https://github.com/Chetan-Kumar-G"
+    }
   }
 ];
 
@@ -101,6 +105,11 @@ function CreditsPage() {
                       {'website' in intern.contact && intern.contact.website && (
                         <a href={intern.contact.website} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors" title="Website">
                           <ExternalLink className="size-6" />
+                        </a>
+                      )}
+                      {'github' in intern.contact && intern.contact.github && (
+                        <a href={intern.contact.github} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary transition-colors" title="GitHub">
+                          <Github className="size-6" />
                         </a>
                       )}
                     </div>

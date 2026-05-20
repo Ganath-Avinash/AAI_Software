@@ -1,18 +1,15 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getUser, getUserAssets, updateUser, subscribe } from "@/lib/mock-data";
+import { subscribe } from "@/lib/mock-data";
 import { Mail, MapPin, Phone, Building2, BadgeCheck, Edit, ArrowRightLeft, HardDrive } from "lucide-react";
 import { useState, useEffect, useReducer } from "react";
 import { UserFormDialog } from "@/components/user-form-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUser, fetchAssets } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/users/$id")({
-  loader: ({ params }) => {
-    const user = getUser(params.id);
-    if (!user) throw notFound();
-    return { user, assets: getUserAssets(user.id) };
-  },
   component: UserDetail,
   notFoundComponent: () => <div className="p-8">User not found.</div>,
 });
@@ -23,8 +20,16 @@ function UserDetail() {
   const [, force] = useReducer((x: number) => x + 1, 0);
   const [editOpen, setEditOpen] = useState(false);
   useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
-  const user = getUser(params.id)!;
-  const assets = getUserAssets(user.id);
+  
+  const { data: user, isLoading: userLoading } = useQuery({ queryKey: ['user', params.id], queryFn: () => fetchUser(params.id) });
+  const { data: allAssets = [] } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+
+  if (userLoading) return <div className="p-8">Loading user details...</div>;
+  if (!user || user.error) return <div className="p-8">User not found.</div>;
+
+  const assets = allAssets.filter((a: any) => user?.assetIds?.includes(a.id));
+  const pastAssets = allAssets.filter((a: any) => user?.pastAssetIds?.includes(a.id) && !user?.assetIds?.includes(a.id));
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Users", to: "/users" }, { label: user.name }]} />
@@ -33,7 +38,7 @@ function UserDetail() {
         onOpenChange={setEditOpen}
         title="Edit User"
         initial={user}
-        onSubmit={(data) => { updateUser(user.id, data); setEditOpen(false); }}
+        onSubmit={(data) => { console.log('Update not yet implemented', data); setEditOpen(false); }}
       />
 
 
@@ -116,6 +121,30 @@ function UserDetail() {
           </div>
         )}
       </div>
+
+      {pastAssets.length > 0 && (
+        <div className="bg-card border rounded-lg opacity-80">
+          <div className="p-4 border-b flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Previously Assigned Assets</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Hardware historically assigned to this employee</p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {pastAssets.map((a: any) => (
+              <Link key={a.id} to="/assets/$id" params={{ id: a.id }}
+                className="border rounded-lg p-4 hover:border-primary hover:shadow-md transition-all group bg-card">
+                <div className="flex items-start justify-between">
+                  <div className="size-9 rounded-md bg-muted text-muted-foreground grid place-items-center"><HardDrive className="size-4" /></div>
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide bg-muted px-2 py-0.5 rounded">Returned</div>
+                </div>
+                <div className="mt-3 font-medium text-sm group-hover:text-primary">{a.id}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{a.type} · {a.model}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,19 +1,15 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { getAsset, getUser, updateAsset, subscribe } from "@/lib/mock-data";
+import { subscribe } from "@/lib/mock-data";
 import { useState, useEffect, useReducer } from "react";
 import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2 } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
 import { useAuth } from "@/lib/auth-context";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAsset, fetchUsers, updateAsset } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/assets/$id")({
-  loader: ({ params }) => {
-    const asset = getAsset(params.id);
-    if (!asset) throw notFound();
-    return { asset, user: asset.assignedTo ? getUser(asset.assignedTo) : null };
-  },
   component: AssetDetail,
   notFoundComponent: () => <div className="p-8">Asset not found.</div>,
 });
@@ -22,13 +18,28 @@ type Tab = "overview" | "network" | "software" | "history";
 
 function AssetDetail() {
   const { role } = useAuth();
+  const queryClient = useQueryClient();
   const params = Route.useParams();
   const [, force] = useReducer((x: number) => x + 1, 0);
   useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
-  const asset = getAsset(params.id)!;
-  const user = asset.assignedTo ? getUser(asset.assignedTo) : null;
   const [tab, setTab] = useState<Tab>("overview");
   const [editOpen, setEditOpen] = useState(false);
+
+  const { data: asset, isLoading: assetLoading } = useQuery({ queryKey: ['asset', params.id], queryFn: () => fetchAsset(params.id) });
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => updateAsset(params.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['asset', params.id] });
+      setEditOpen(false);
+    }
+  });
+
+  if (assetLoading) return <div className="p-8">Loading asset details...</div>;
+  if (!asset || asset.error) return <div className="p-8">Asset not found.</div>;
+
+  const user = asset.assignedTo ? users.find((u: any) => u.id === asset.assignedTo) : null;
 
 
   return (
@@ -40,8 +51,7 @@ function AssetDetail() {
         title="Edit Asset"
         initial={asset}
         onSubmit={(data) => {
-          updateAsset(asset.id, { ...data, assignedTo: data.assignedTo || null });
-          setEditOpen(false);
+          updateMutation.mutate(data);
         }}
       />
 
@@ -83,6 +93,10 @@ function AssetDetail() {
                 </div>
               </Link>
             ) : <div className="text-sm text-muted-foreground">Currently unassigned</div>}
+            
+            <button onClick={() => setTab("history")} className="mt-4 w-full h-8 px-3 rounded-md border border-dashed bg-transparent text-xs font-medium hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
+              <History className="size-3.5" /> View Previous Owners
+            </button>
           </div>
 
           <div className="bg-card border rounded-lg p-4 space-y-3 text-sm">
@@ -116,12 +130,13 @@ function AssetDetail() {
           <div className="p-5">
             {tab === "overview" && (
               <div className="grid sm:grid-cols-2 gap-4">
-                {Object.entries(asset.specs as Record<string,string>).map(([k, v]) => (
+                {asset.specs && Object.entries(asset.specs as Record<string,string>).map(([k, v]) => (
                   <div key={k} className="p-3 rounded-md bg-muted/40">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">{k}</div>
                     <div className="text-sm font-medium mt-0.5">{v}</div>
                   </div>
                 ))}
+                {!asset.specs && <Empty text="No detailed specs available." />}
               </div>
             )}
             {tab === "network" && (
@@ -166,13 +181,25 @@ function AssetDetail() {
             )}
             {tab === "history" && (
               <ol className="relative border-l ml-3 space-y-6">
-                {(asset.history as any[]).map((h: any, i: number) => (
-                  <li key={i} className="ml-6">
-                    <span className="absolute -left-1.5 size-3 rounded-full bg-primary border-2 border-card mt-1.5" />
-                    <div className="text-xs text-muted-foreground">{h.date} · by {h.by}</div>
-                    <div className="text-sm font-medium mt-0.5">{h.action}</div>
-                  </li>
-                ))}
+                {(asset.history || []).map((h: any, i: number) => {
+                  const isReturned = h.action?.toLowerCase().includes("returned");
+                  const isAssigned = h.action?.toLowerCase().includes("assigned");
+                  const color = isReturned ? "bg-warning" : isAssigned ? "bg-info" : "bg-primary";
+                  
+                  return (
+                    <li key={i} className="ml-6 group">
+                      <span className={`absolute -left-1.5 size-3 rounded-full ${color} border-2 border-card mt-1.5`} />
+                      <div className="text-xs text-muted-foreground flex gap-2"><span>{h.date}</span> <span className="opacity-50">·</span> <span>by {h.by}</span></div>
+                      <div className="text-sm font-medium mt-0.5">{h.action}</div>
+                      
+                      {h.by_user && (
+                        <div className="mt-2 p-2 rounded-md bg-muted/40 text-xs border border-transparent group-hover:border-border transition-colors flex items-center gap-2 w-fit pr-4">
+                           <UserIcon className="size-3 text-muted-foreground" /> {h.by_user}
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
               </ol>
             )}
           </div>

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { assets } from "@/lib/mock-data";
-import { AppWindow } from "lucide-react";
+import { AppWindow, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/export";
 
 export const Route = createFileRoute("/_app/software")({
   component: SoftwarePage,
@@ -22,9 +23,14 @@ function SoftwarePage() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Software" }]} />
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Software & Licenses</h1>
-        <p className="text-sm text-muted-foreground mt-1">{items.length} unique applications across the fleet</p>
+      <div className="flex justify-between items-end flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Software & Licenses</h1>
+          <p className="text-sm text-muted-foreground mt-1">{items.length} unique applications across the fleet</p>
+        </div>
+        <button onClick={() => exportToCsv(items.map(it => ({ Name: it.name, Version: it.version, Installs: it.count, SampleKey: it.sample.key, Expires: it.sample.expires })), 'software-export')} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2">
+          <Download className="size-4" /> Export
+        </button>
       </div>
 
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">

@@ -1,8 +1,9 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { users, assets, updateAsset } from "@/lib/mock-data";
 import { useState } from "react";
 import { Check, ArrowRight, User as UserIcon, HardDrive } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchUsers, fetchAssets, assignAsset } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/assignments")({
   beforeLoad: () => {
@@ -16,14 +17,35 @@ export const Route = createFileRoute("/_app/assignments")({
 });
 
 function AssignPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { userId: initialUserId } = Route.useSearch();
   const [step, setStep] = useState(initialUserId ? 2 : 1);
   const [userId, setUserId] = useState<string>(initialUserId || "");
   const [assetIds, setAssetIds] = useState<string[]>([]);
-  const available = assets.filter(a => a.status === "Available");
+  
+  const { data: allUsers = [], isLoading: usersLoading } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: allAssets = [], isLoading: assetsLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+
+  const activeUsers = allUsers.filter((u: any) => u.status === 'Active');
+  const available = allAssets.filter((a: any) => a.status === "Available");
   const done = step === 4;
 
-  const assetTypes = Array.from(new Set(available.map(a => a.type)));
+  const assignMutation = useMutation({
+    mutationFn: async (data: { assetIds: string[], userId: string }) => {
+      for (const assetId of data.assetIds) {
+        await assignAsset({ assetId, userId: data.userId });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      setStep(4);
+    }
+  });
+
+  const assetTypes = Array.from(new Set(available.map((a: any) => a.type)));
   const [selectedType, setSelectedType] = useState<string>(assetTypes[0] || "");
 
   return (
@@ -55,7 +77,7 @@ function AssignPage() {
           <div className="text-center space-y-3 py-10">
             <div className="size-14 rounded-full bg-success/10 text-success grid place-items-center mx-auto"><Check className="size-7" /></div>
             <h2 className="text-xl font-semibold">Assignment confirmed</h2>
-            <p className="text-sm text-muted-foreground">{assetIds.length} asset(s) have been assigned to {users.find(u=>u.id===userId)?.name}.</p>
+            <p className="text-sm text-muted-foreground">{assetIds.length} asset(s) have been assigned to {allUsers.find((u:any)=>u.id===userId)?.name}.</p>
             <div className="flex justify-center gap-2 pt-2">
               <button onClick={() => { setStep(initialUserId ? 2 : 1); setUserId(initialUserId || ""); setAssetIds([]); }} className="h-9 px-3 rounded-md border bg-card text-sm">New assignment</button>
               <Link to="/users/$id" params={{ id: userId }} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center">View user</Link>
@@ -67,9 +89,9 @@ function AssignPage() {
           <div className="space-y-2">
             <h3 className="font-semibold mb-3">Choose an employee</h3>
             <div className="grid sm:grid-cols-2 gap-2 max-h-[400px] overflow-auto">
-              {users.map(u => (
+              {activeUsers.map((u: any) => (
                 <button key={u.id} onClick={() => setUserId(u.id)} className={`flex items-center gap-3 p-3 rounded-md border text-left hover:border-primary ${userId === u.id ? "border-primary bg-primary/5" : ""}`}>
-                  <div className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
+                  <div className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{(u.name || "?").split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
                   <div><div className="font-medium text-sm">{u.name}</div><div className="text-xs text-muted-foreground">{u.department}</div></div>
                 </button>
               ))}
@@ -92,7 +114,7 @@ function AssignPage() {
               ))}
             </div>
             <div className="grid sm:grid-cols-2 gap-2 max-h-[300px] overflow-auto pr-2">
-              {available.filter(a => a.type === selectedType).map(a => (
+              {available.filter((a: any) => a.type === selectedType).map((a: any) => (
                 <button key={a.id} onClick={() => setAssetIds(prev => prev.includes(a.id) ? prev.filter(id => id !== a.id) : [...prev, a.id])} className={`flex items-center gap-3 p-3 rounded-md border text-left hover:border-primary ${assetIds.includes(a.id) ? "border-primary bg-primary/5" : ""}`}>
                   <div className={`size-5 rounded border grid place-items-center ${assetIds.includes(a.id) ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
                     {assetIds.includes(a.id) && <Check className="size-3" />}
@@ -111,14 +133,14 @@ function AssignPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-md bg-muted/40 h-fit">
                 <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><UserIcon className="size-3" /> Employee</div>
-                <div className="mt-1 font-semibold">{users.find(u=>u.id===userId)?.name}</div>
-                <div className="text-xs text-muted-foreground">{users.find(u=>u.id===userId)?.department}</div>
+                <div className="mt-1 font-semibold">{allUsers.find((u:any)=>u.id===userId)?.name}</div>
+                <div className="text-xs text-muted-foreground">{allUsers.find((u:any)=>u.id===userId)?.department}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><HardDrive className="size-3" /> Assets ({assetIds.length})</div>
                 <div className="max-h-[200px] overflow-auto space-y-2 pr-2">
                   {assetIds.map(id => {
-                    const a = assets.find(x => x.id === id);
+                    const a = allAssets.find((x:any) => x.id === id);
                     return (
                       <div key={id} className="p-3 rounded-md bg-muted/40">
                         <div className="font-semibold text-sm">{a?.id}</div>
@@ -139,12 +161,11 @@ function AssignPage() {
           <button onClick={() => setStep(s => Math.max(1, s - 1))} disabled={step === 1 || (step === 2 && !!initialUserId)} className="h-9 px-3 rounded-md border bg-card text-sm disabled:opacity-50">Back</button>
           <button onClick={() => {
             if (step === 3) {
-              assetIds.forEach(id => updateAsset(id, { status: "Assigned", assignedTo: userId }));
-              setStep(4);
+              assignMutation.mutate({ assetIds, userId });
             } else {
               setStep(s => s + 1);
             }
-          }} disabled={(step === 1 && !userId) || (step === 2 && assetIds.length === 0)} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+          }} disabled={(step === 1 && !userId) || (step === 2 && assetIds.length === 0) || assignMutation.isPending} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50">
             {step === 3 ? "Confirm assignment" : "Continue"} <ArrowRight className="size-4" />
           </button>
         </div>

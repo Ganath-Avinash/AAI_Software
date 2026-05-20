@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { assets, users, addAsset, subscribe } from "@/lib/mock-data";
+import { assets as mockAssets, users as mockUsers, addAsset, subscribe } from "@/lib/mock-data";
 import { useState, useMemo, useEffect, useReducer } from "react";
-import { Plus, Search, Grid3x3, List } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAssets, fetchUsers, fetchAssetTypes, createAsset } from "@/lib/api";
+import { Plus, Search, Grid3x3, List, Download } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { exportToCsv } from "@/lib/export";
 
 export const Route = createFileRoute("/_app/assets/")({
   component: AssetsList,
@@ -13,24 +16,33 @@ export const Route = createFileRoute("/_app/assets/")({
 
 function AssetsList() {
   const { role } = useAuth();
+  const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [view, setView] = useState<"table" | "grid">("table");
   const [open, setOpen] = useState(false);
-  const [, force] = useReducer(x => x + 1, 0);
-  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
 
+  const { data: assets = [], isLoading: assetsLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+  const { data: users = [], isLoading: usersLoading } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: serverTypes = [] } = useQuery({ queryKey: ['asset-types'], queryFn: fetchAssetTypes });
 
-  const filtered = useMemo(() => assets.filter(a => {
+  const createMutation = useMutation({
+    mutationFn: createAsset,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      setOpen(false);
+    }
+  });
+  const filtered = useMemo(() => assets.filter((a: any) => {
     const lower = q.toLowerCase();
-    const matchQ = !q || a.id.toLowerCase().includes(lower) || a.model.toLowerCase().includes(lower) || a.serial.toLowerCase().includes(lower);
+    const matchQ = !q || a.id.toLowerCase().includes(lower) || (a.model && a.model.toLowerCase().includes(lower)) || (a.serial && a.serial.toLowerCase().includes(lower));
     const matchT = type === "all" || a.type === type;
     const matchS = status === "all" || a.status === status;
     return matchQ && matchT && matchS;
-  }), [q, type, status]);
+  }), [q, type, status, assets]);
 
-  const types = Array.from(new Set(assets.map(a => a.type)));
+  const types = serverTypes.length > 0 ? serverTypes : Array.from(new Set(assets.map((a: any) => a.type).filter(Boolean)));
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -40,17 +52,21 @@ function AssetsList() {
           <h1 className="text-2xl font-bold tracking-tight">Assets</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {assets.length} hardware items</p>
         </div>
-        {role === "admin" && (
-          <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
-        )}
+        <div className="flex gap-2">
+          <button onClick={() => exportToCsv(filtered, 'assets-export')} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2">
+            <Download className="size-4" /> Export
+          </button>
+          {role === "admin" && (
+            <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+          )}
+        </div>
       </div>
       <AssetFormDialog
         open={open}
         onOpenChange={setOpen}
         title="Add New Asset"
         onSubmit={(data) => {
-          addAsset({ ...data, assignedTo: data.assignedTo || null });
-          setOpen(false);
+          createMutation.mutate({ ...data, assignedTo: data.assignedTo || null });
         }}
       />
 
@@ -91,8 +107,8 @@ function AssetsList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map(a => {
-                  const u = a.assignedTo ? users.find(x => x.id === a.assignedTo) : null;
+                {filtered.map((a: any) => {
+                  const u = a.assignedTo ? users.find((x: any) => x.id === a.assignedTo) : null;
                   return (
                     <tr key={a.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3"><Link to="/assets/$id" params={{ id: a.id }} className="font-medium text-primary hover:underline">{a.id}</Link></td>
@@ -110,7 +126,7 @@ function AssetsList() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-4">
-            {filtered.map(a => (
+            {filtered.map((a: any) => (
               <Link key={a.id} to="/assets/$id" params={{ id: a.id }} className="border rounded-lg p-4 hover:border-primary hover:shadow-md transition-all">
                 <div className="flex justify-between"><div className="text-xs text-muted-foreground">{a.type}</div><StatusBadge status={a.status} /></div>
                 <div className="mt-2 font-semibold text-primary">{a.id}</div>

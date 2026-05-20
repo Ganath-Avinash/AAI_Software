@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
 import { assets } from "@/lib/mock-data";
-import { Network as NetIcon } from "lucide-react";
+import { Network as NetIcon, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/export";
 
 export const Route = createFileRoute("/_app/network")({
   component: NetworkPage,
@@ -13,9 +14,14 @@ function NetworkPage() {
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Network" }]} />
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Network Devices</h1>
-        <p className="text-sm text-muted-foreground mt-1">{netAssets.length} devices on AAI internal network</p>
+      <div className="flex justify-between items-end flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Network Devices</h1>
+          <p className="text-sm text-muted-foreground mt-1">{netAssets.length} devices on AAI internal network</p>
+        </div>
+        <button onClick={() => exportToCsv(netAssets.map(a => ({ Hostname: a.network!.hostname, AssetId: a.id, IP: a.network!.ip, MACEthernet: a.network!.macEthernet, VLAN: a.network!.vlan, Status: a.network!.online ? "Online" : "Offline" })), 'network-export')} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2">
+          <Download className="size-4" /> Export
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-4">

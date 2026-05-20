@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { users, addUser, subscribe } from "@/lib/mock-data";
+import { users as mockUsers, addUser, subscribe } from "@/lib/mock-data";
 import { useState, useMemo, useEffect, useReducer } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchUsers, fetchDepartments, createUser } from "@/lib/api";
+import { Plus, Search, Filter, Download } from "lucide-react";
 import { UserFormDialog } from "@/components/user-form-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { exportToCsv } from "@/lib/export";
 
 export const Route = createFileRoute("/_app/users/")({
   component: UsersList,
@@ -13,20 +16,30 @@ export const Route = createFileRoute("/_app/users/")({
 
 function UsersList() {
   const { role } = useAuth();
+  const queryClient = useQueryClient();
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [open, setOpen] = useState(false);
-  const [, force] = useReducer(x => x + 1, 0);
-  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
 
+  const { data: users = [], isLoading: usersLoading } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: serverDepartments = [] } = useQuery({ queryKey: ['departments'], queryFn: fetchDepartments });
 
-  const filtered = useMemo(() => users.filter(u => {
-    const matchesQ = !q || u.name.toLowerCase().includes(q.toLowerCase()) || u.empId.toLowerCase().includes(q.toLowerCase());
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setOpen(false);
+    }
+  });
+  const filtered = useMemo(() => users.filter((u: any) => {
+    const matchesQ = !q || (u.name && u.name.toLowerCase().includes(q.toLowerCase())) || (u.empId && u.empId.toLowerCase().includes(q.toLowerCase()));
     const matchesD = dept === "all" || u.department === dept;
-    return matchesQ && matchesD;
-  }), [q, dept]);
+    const matchesS = statusFilter === "all" || u.status === statusFilter;
+    return matchesQ && matchesD && matchesS;
+  }), [q, dept, statusFilter, users]);
 
-  const departments = Array.from(new Set(users.map(u => u.department)));
+  const departments = serverDepartments.length > 0 ? serverDepartments : Array.from(new Set(users.map((u: any) => u.department).filter(Boolean)));
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -36,21 +49,36 @@ function UsersList() {
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} of {users.length} employees</p>
         </div>
-        {role === "admin" && (
-          <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
-        )}
+        <div className="flex gap-2">
+          <button onClick={() => exportToCsv(filtered, 'users-export')} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2">
+            <Download className="size-4" /> Export
+          </button>
+          {role === "admin" && (
+            <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add user</button>
+          )}
+        </div>
       </div>
 
       <UserFormDialog
         open={open}
         onOpenChange={setOpen}
         title="Add New User"
-        onSubmit={(data) => { addUser(data); setOpen(false); }}
+        onSubmit={(data) => { createMutation.mutate(data); }}
       />
       
 
 
       <div className="bg-card border rounded-lg">
+        <div className="border-b px-4 flex gap-1">
+          {["Active", "Inactive", "all"].map(s => (
+            <button key={s} onClick={() => setStatusFilter(s)}
+              className={`flex items-center gap-2 px-3 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                statusFilter === s ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}>
+              {s === "all" ? "All Users" : s === "Active" ? "Active Users" : "Retired / Inactive"}
+            </button>
+          ))}
+        </div>
         <div className="p-4 border-b flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -80,11 +108,11 @@ function UsersList() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map(u => (
+              {filtered.map((u: any) => (
                 <tr key={u.id} className="hover:bg-muted/30 group">
                   <td className="px-4 py-3">
                     <Link to="/users/$id" params={{ id: u.id }} className="flex items-center gap-3">
-                      <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{u.name.split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
+                      <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center text-xs font-semibold">{(u.name || "?").split(" ").map((n: string)=>n[0]).join("").slice(0,2)}</div>
                       <div>
                         <div className="font-medium text-foreground group-hover:text-primary">{u.name}</div>
                         <div className="text-xs text-muted-foreground">{u.empId}</div>

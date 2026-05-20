@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { stats, recentActivity, assets, users } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDashboardStats, fetchAssets, fetchUsers, fetchHistory } from "@/lib/api";
 import {
   HardDrive, CheckCircle2, AlertTriangle, Network as NetIcon,
   Users as UsersIcon, ArrowRightLeft, Undo2, Wrench, TrendingUp, Plus
@@ -12,18 +13,30 @@ export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
 
-const statCards = [
-  { label: "Total Assets", value: stats.total, icon: HardDrive, tone: "bg-primary/10 text-primary", trend: "+4 this month" },
-  { label: "Assigned", value: stats.assigned, icon: CheckCircle2, tone: "bg-info/10 text-info", trend: `${Math.round(stats.assigned/stats.total*100)}% utilization` },
-  { label: "Available", value: stats.available, icon: CheckCircle2, tone: "bg-success/10 text-success", trend: "Ready to deploy" },
-  { label: "Warranty Expiring", value: stats.warrantyExpiring, icon: AlertTriangle, tone: "bg-warning/15 text-warning-foreground", trend: "Next 6 months" },
-  { label: "Network Devices", value: stats.networkDevices, icon: NetIcon, tone: "bg-info/10 text-info", trend: "Across 6 sites" },
-  { label: "Total Users", value: stats.users, icon: UsersIcon, tone: "bg-accent text-accent-foreground", trend: `${stats.activeUsers} active` },
-];
-
 function Dashboard() {
   const { role } = useAuth();
-  const recentAssignments = assets.filter(a => a.assignedTo).slice(0, 5);
+  
+  const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['dashboard-stats'], queryFn: fetchDashboardStats });
+  const { data: assets, isLoading: assetsLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+  const { data: users, isLoading: usersLoading } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: recentActivity, isLoading: historyLoading } = useQuery({ queryKey: ['history'], queryFn: fetchHistory });
+
+  if (statsLoading || assetsLoading || usersLoading || historyLoading) {
+    return <div className="p-6">Loading dashboard data...</div>;
+  }
+
+  const statCards = [
+    { label: "Total Assets", value: stats?.total || 0, icon: HardDrive, tone: "bg-primary/10 text-primary", trend: "Total tracked" },
+    { label: "Assigned", value: stats?.assigned || 0, icon: CheckCircle2, tone: "bg-info/10 text-info", trend: `${Math.round(((stats?.assigned || 0)/(stats?.total || 1))*100)}% utilization` },
+    { label: "Available", value: stats?.available || 0, icon: CheckCircle2, tone: "bg-success/10 text-success", trend: "Ready to deploy" },
+    { label: "Warranty Expiring", value: stats?.warrantyExpiring || 0, icon: AlertTriangle, tone: "bg-warning/15 text-warning-foreground", trend: "Next 6 months" },
+    { label: "Network Devices", value: stats?.networkDevices || 0, icon: NetIcon, tone: "bg-info/10 text-info", trend: "Network tracked" },
+    { label: "Total Users", value: stats?.users || 0, icon: UsersIcon, tone: "bg-accent text-accent-foreground", trend: `${stats?.activeUsers || 0} active` },
+  ];
+
+  const recentAssignments = (assets || []).filter((a: any) => a.assignedTo).slice(0, 5);
+  const displayActivity = (recentActivity || []).slice(0, 5);
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Dashboard" }]} />
@@ -70,8 +83,8 @@ function Dashboard() {
               <tr><th className="text-left px-4 py-2.5 font-medium">Asset</th><th className="text-left px-4 py-2.5 font-medium">Assigned To</th><th className="text-left px-4 py-2.5 font-medium">Location</th><th className="text-left px-4 py-2.5 font-medium">Status</th></tr>
             </thead>
             <tbody className="divide-y">
-              {recentAssignments.map(a => {
-                const u = users.find(x => x.id === a.assignedTo);
+              {recentAssignments.map((a: any) => {
+                const u = (users || []).find((x: any) => x.id === a.assignedTo);
                 return (
                   <tr key={a.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3"><Link to="/assets/$id" params={{ id: a.id }} className="font-medium text-primary hover:underline">{a.id}</Link><div className="text-xs text-muted-foreground">{a.model}</div></td>
@@ -91,14 +104,14 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mt-0.5">Latest system events</p>
           </div>
           <ul className="p-4 space-y-4">
-            {recentActivity.map(a => (
+            {displayActivity.map((a: any) => (
               <li key={a.id} className="flex gap-3">
                 <div className="size-8 shrink-0 rounded-full bg-accent grid place-items-center">
-                  {a.type === "assign" ? <ArrowRightLeft className="size-3.5" /> : a.type === "withdraw" ? <Undo2 className="size-3.5" /> : a.type === "warranty" ? <AlertTriangle className="size-3.5" /> : <Wrench className="size-3.5" />}
+                  {a.status === "Assigned" ? <ArrowRightLeft className="size-3.5" /> : a.status === "Returned" ? <Undo2 className="size-3.5" /> : <Wrench className="size-3.5" />}
                 </div>
                 <div className="text-sm">
-                  <div>{a.text}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{a.time}</div>
+                  <div>{a.action}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{a.assignedDate || a.returnedDate}</div>
                 </div>
               </li>
             ))}
