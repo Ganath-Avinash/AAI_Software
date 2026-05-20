@@ -97,3 +97,22 @@ export async function fetchAssetTypes() {
     const data = await res.json();
     return data.map((d: any) => d.asset_type_name);
 }
+
+// Vendor Endpoints
+export async function fetchVendors() {
+    const res = await fetch(`${API_BASE}/vendors`);
+    if (!res.ok) throw new Error('Failed to fetch vendors');
+    return res.json();
+}
+
+export async function fetchVendor(id: string) {
+    const res = await fetch(`${API_BASE}/vendors/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch vendor');
+    return res.json();
+}
+
+export async function fetchVendorAssets(id: string) {
+    const res = await fetch(`${API_BASE}/vendors/${id}/assets`);
+    if (!res.ok) throw new Error('Failed to fetch vendor assets');
+    return res.json();
+}

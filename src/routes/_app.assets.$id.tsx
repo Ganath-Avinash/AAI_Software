@@ -3,7 +3,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
 import { subscribe } from "@/lib/mock-data";
 import { useState, useEffect, useReducer } from "react";
-import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2 } from "lucide-react";
+import { HardDrive, Network as NetIcon, AppWindow, History, User as UserIcon, Calendar, MapPin, Hash, Edit, Undo2, Store } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -106,6 +106,7 @@ function AssetDetail() {
             <Row icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />
             <Row icon={Calendar} label="Warranty Until" value={asset.warrantyUntil} />
             <Row icon={UserIcon} label="Make" value={asset.make} />
+            {asset.vendor && <Row icon={Store} label="Supplier" value={asset.vendor} />}
           </div>
         </div>
 

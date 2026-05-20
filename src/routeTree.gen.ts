@@ -19,8 +19,10 @@ import { Route as AppNetworkRouteImport } from './routes/_app.network'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCreditsRouteImport } from './routes/_app.credits'
 import { Route as AppAssignmentsRouteImport } from './routes/_app.assignments'
+import { Route as AppVendorsIndexRouteImport } from './routes/_app.vendors.index'
 import { Route as AppUsersIndexRouteImport } from './routes/_app.users.index'
 import { Route as AppAssetsIndexRouteImport } from './routes/_app.assets.index'
+import { Route as AppVendorsIdRouteImport } from './routes/_app.vendors.$id'
 import { Route as AppUsersIdRouteImport } from './routes/_app.users.$id'
 import { Route as AppAssetsIdRouteImport } from './routes/_app.assets.$id'
 
@@ -73,6 +75,11 @@ const AppAssignmentsRoute = AppAssignmentsRouteImport.update({
   path: '/assignments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppVendorsIndexRoute = AppVendorsIndexRouteImport.update({
+  id: '/vendors/',
+  path: '/vendors/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -81,6 +88,11 @@ const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
 const AppAssetsIndexRoute = AppAssetsIndexRouteImport.update({
   id: '/assets/',
   path: '/assets/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVendorsIdRoute = AppVendorsIdRouteImport.update({
+  id: '/vendors/$id',
+  path: '/vendors/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUsersIdRoute = AppUsersIdRouteImport.update({
@@ -106,8 +118,10 @@ export interface FileRoutesByFullPath {
   '/withdrawals': typeof AppWithdrawalsRoute
   '/assets/$id': typeof AppAssetsIdRoute
   '/users/$id': typeof AppUsersIdRoute
+  '/vendors/$id': typeof AppVendorsIdRoute
   '/assets/': typeof AppAssetsIndexRoute
   '/users/': typeof AppUsersIndexRoute
+  '/vendors/': typeof AppVendorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -121,8 +135,10 @@ export interface FileRoutesByTo {
   '/withdrawals': typeof AppWithdrawalsRoute
   '/assets/$id': typeof AppAssetsIdRoute
   '/users/$id': typeof AppUsersIdRoute
+  '/vendors/$id': typeof AppVendorsIdRoute
   '/assets': typeof AppAssetsIndexRoute
   '/users': typeof AppUsersIndexRoute
+  '/vendors': typeof AppVendorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -138,8 +154,10 @@ export interface FileRoutesById {
   '/_app/withdrawals': typeof AppWithdrawalsRoute
   '/_app/assets/$id': typeof AppAssetsIdRoute
   '/_app/users/$id': typeof AppUsersIdRoute
+  '/_app/vendors/$id': typeof AppVendorsIdRoute
   '/_app/assets/': typeof AppAssetsIndexRoute
   '/_app/users/': typeof AppUsersIndexRoute
+  '/_app/vendors/': typeof AppVendorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -155,8 +173,10 @@ export interface FileRouteTypes {
     | '/withdrawals'
     | '/assets/$id'
     | '/users/$id'
+    | '/vendors/$id'
     | '/assets/'
     | '/users/'
+    | '/vendors/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -170,8 +190,10 @@ export interface FileRouteTypes {
     | '/withdrawals'
     | '/assets/$id'
     | '/users/$id'
+    | '/vendors/$id'
     | '/assets'
     | '/users'
+    | '/vendors'
   id:
     | '__root__'
     | '/'
@@ -186,8 +208,10 @@ export interface FileRouteTypes {
     | '/_app/withdrawals'
     | '/_app/assets/$id'
     | '/_app/users/$id'
+    | '/_app/vendors/$id'
     | '/_app/assets/'
     | '/_app/users/'
+    | '/_app/vendors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -267,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAssignmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/vendors/': {
+      id: '/_app/vendors/'
+      path: '/vendors'
+      fullPath: '/vendors/'
+      preLoaderRoute: typeof AppVendorsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/users/': {
       id: '/_app/users/'
       path: '/users'
@@ -279,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/assets'
       fullPath: '/assets/'
       preLoaderRoute: typeof AppAssetsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/vendors/$id': {
+      id: '/_app/vendors/$id'
+      path: '/vendors/$id'
+      fullPath: '/vendors/$id'
+      preLoaderRoute: typeof AppVendorsIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/users/$id': {
@@ -309,8 +347,10 @@ interface AppRouteChildren {
   AppWithdrawalsRoute: typeof AppWithdrawalsRoute
   AppAssetsIdRoute: typeof AppAssetsIdRoute
   AppUsersIdRoute: typeof AppUsersIdRoute
+  AppVendorsIdRoute: typeof AppVendorsIdRoute
   AppAssetsIndexRoute: typeof AppAssetsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
+  AppVendorsIndexRoute: typeof AppVendorsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -324,8 +364,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppWithdrawalsRoute: AppWithdrawalsRoute,
   AppAssetsIdRoute: AppAssetsIdRoute,
   AppUsersIdRoute: AppUsersIdRoute,
+  AppVendorsIdRoute: AppVendorsIdRoute,
   AppAssetsIndexRoute: AppAssetsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
+  AppVendorsIndexRoute: AppVendorsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

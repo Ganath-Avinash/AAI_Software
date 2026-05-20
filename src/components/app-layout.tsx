@@ -1,7 +1,7 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, HardDrive, Network, AppWindow,
-  ArrowRightLeft, Undo2, BarChart3, Settings, Plane, LogOut, Info, Key
+  ArrowRightLeft, Undo2, BarChart3, Settings, Plane, LogOut, Info, Key, Store
 } from "lucide-react";
 import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/assets", label: "Assets", icon: HardDrive },
   { to: "/network", label: "Network", icon: Network },
   { to: "/software", label: "Software", icon: AppWindow },
+  { to: "/vendors", label: "Vendors", icon: Store },
   { to: "/assignments", label: "Assignments", icon: ArrowRightLeft },
   { to: "/withdrawals", label: "Withdrawals", icon: Undo2 },
   { to: "/reports", label: "Reports", icon: BarChart3 },

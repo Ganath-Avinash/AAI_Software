@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsers, fetchLocations } from "@/lib/api";
+import { fetchUsers, fetchLocations, fetchVendors } from "@/lib/api";
 import type { Asset } from "@/lib/mock-data";
 import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 
@@ -15,6 +15,7 @@ type FormData = {
   status: Asset["status"];
   location: string;
   assignedTo: string;
+  vendor?: string;
   specs?: any;
   network?: any;
 };
@@ -29,6 +30,7 @@ const empty: FormData = {
   status: "Available",
   location: "ADMIN-TF",
   assignedTo: "",
+  vendor: "",
   specs: {},
   network: {},
 };
@@ -53,6 +55,7 @@ export function AssetFormDialog({
   
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: fetchLocations });
+  const { data: vendors = [] } = useQuery({ queryKey: ['vendors'], queryFn: fetchVendors });
 
   useEffect(() => {
     if (open) {
@@ -68,6 +71,7 @@ export function AssetFormDialog({
           status: initial.status,
           location: initial.location,
           assignedTo: initial.assignedTo ?? "",
+          vendor: initial.vendor ?? "",
           specs: initial.specs || {},
           network: initial.network || {},
         });
@@ -84,7 +88,7 @@ export function AssetFormDialog({
 
   const handleNext = () => {
     // Basic validation for step 1
-    if (step === 1 && (!form.model.trim() || !form.serial.trim())) {
+    if (step === 1 && (!form.model?.trim() || !form.serial?.trim())) {
       return;
     }
     if (step < maxStep) setStep(step + 1);
@@ -94,10 +98,15 @@ export function AssetFormDialog({
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.model.trim() || !form.serial.trim()) return;
-    onSubmit(form);
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!form.model?.trim() || !form.serial?.trim()) return;
+    
+    if (step < maxStep) {
+      setStep(step + 1);
+    } else {
+      onSubmit(form);
+    }
   };
 
   return (
@@ -140,6 +149,18 @@ export function AssetFormDialog({
               <Field label="Make"><input value={form.make} onChange={e => set("make", e.target.value)} className={inputCls} /></Field>
               <Field label="Model"><input required value={form.model} onChange={e => set("model", e.target.value)} className={inputCls} /></Field>
               <Field label="Serial Number" className="col-span-2"><input required value={form.serial} onChange={e => set("serial", e.target.value)} className={inputCls} /></Field>
+              <Field label="Supplier/Vendor" className="col-span-2">
+                <input 
+                  list="vendors-list" 
+                  value={form.vendor || ''} 
+                  onChange={e => set("vendor", e.target.value)} 
+                  className={inputCls} 
+                  placeholder="Type or select a vendor" 
+                />
+                <datalist id="vendors-list">
+                  {vendors.map((v: any) => <option key={v.id} value={v.name} />)}
+                </datalist>
+              </Field>
               <Field label="Purchase Date"><input type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} className={inputCls} /></Field>
               <Field label="Warranty Until"><input type="date" value={form.warrantyUntil} onChange={e => set("warrantyUntil", e.target.value)} className={inputCls} /></Field>
               <Field label="Location" className="col-span-2">
@@ -185,9 +206,9 @@ export function AssetFormDialog({
                 <button type="button" onClick={handleBack} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-1"><ArrowLeft className="size-4"/> Back</button>
               )}
               {step < maxStep ? (
-                <button type="button" onClick={handleNext} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-1">Next <ArrowRight className="size-4"/></button>
+                <button type="button" onClick={(e) => { e.preventDefault(); handleNext(); }} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-1">Next <ArrowRight className="size-4"/></button>
               ) : (
-                <button type="submit" className="h-9 px-6 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Save Asset</button>
+                <button type="button" onClick={handleSubmit} className="h-9 px-6 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Save Asset</button>
               )}
             </div>
           </DialogFooter>
