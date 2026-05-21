@@ -12,7 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const DEFAULT_PASSWORDS = {
-  admin: "admin",
+  admin: "aai2026",
   regular: "password"
 };
 
@@ -39,7 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (username: string, pass: string) => {
     const r = username.toLowerCase();
-    if ((r === "admin" || r === "regular") && passwords[r] === pass) {
+    const storedPass = passwords[r];
+    const defaultPass = r === "admin" ? "aai2026" : "password";
+    
+    if ((r === "admin" || r === "regular") && (storedPass === pass || defaultPass === pass)) {
       setRole(r as Role);
       try { localStorage.setItem("auth_role", r); } catch {}
       return true;

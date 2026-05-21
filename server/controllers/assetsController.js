@@ -238,7 +238,7 @@ export const createAsset = async (req, res) => {
 
 export const updateAsset = async (req, res) => {
     const { id } = req.params;
-    const { type, make, model, serial, purchaseDate, warrantyUntil, status, location, specs, network, vendor } = req.body;
+    const { type, make, model, serial, purchaseDate, warrantyUntil, status, location, specs, network, vendor, assignedTo } = req.body;
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -284,6 +284,52 @@ export const updateAsset = async (req, res) => {
                 purchase_date = ?, warranty_end_date = ?, status_id = ?, location_id = ?
             WHERE asset_id = ?
         `, [aty?.asset_type_id, modelId, vendorId, serial, purchaseDate, warrantyUntil, ast?.status_id, loc?.location_id, id]);
+
+        // Handle Assignment changes
+        const [currentAssignments] = await connection.query(`
+            SELECT assignment_id, user_id FROM user_asset_assignment 
+            WHERE asset_id = ? AND returned_date IS NULL
+        `, [id]);
+        
+        const currentUserId = currentAssignments.length > 0 ? currentAssignments[0].user_id : null;
+        
+        if (assignedTo && assignedTo !== currentUserId) {
+            // Return from current user if assigned to someone else
+            if (currentUserId) {
+                await connection.query('UPDATE user_asset_assignment SET returned_date = NOW() WHERE assignment_id = ?', [currentAssignments[0].assignment_id]);
+                await connection.query(`
+                    INSERT INTO asset_assignment_history (asset_id, user_id, returned_date, assignment_status, remarks, returned_to_store)
+                    VALUES (?, ?, NOW(), 'Returned', 'Reassigned during asset update', TRUE)
+                `, [id, currentUserId]);
+            }
+            
+            // Assign to new user
+            await connection.query(`
+                INSERT INTO user_asset_assignment (user_id, asset_id, assigned_date) 
+                VALUES (?, ?, NOW())
+            `, [assignedTo, id]);
+            
+            await connection.query(`
+                INSERT INTO asset_assignment_history (asset_id, user_id, assigned_date, assignment_status, remarks, assigned_by)
+                VALUES (?, ?, NOW(), 'Assigned', 'Assigned during asset update', 'Admin')
+            `, [id, assignedTo]);
+            
+            // Force status to Assigned
+            const [[assignedStatus]] = await connection.query("SELECT status_id FROM asset_status WHERE status_name = 'Assigned'");
+            await connection.query('UPDATE assets SET status_id = ? WHERE asset_id = ?', [assignedStatus.status_id, id]);
+            
+        } else if (!assignedTo && currentUserId) {
+            // Unassigned from current user
+            await connection.query('UPDATE user_asset_assignment SET returned_date = NOW() WHERE assignment_id = ?', [currentAssignments[0].assignment_id]);
+            await connection.query(`
+                INSERT INTO asset_assignment_history (asset_id, user_id, returned_date, assignment_status, remarks, returned_to_store)
+                VALUES (?, ?, NOW(), 'Returned', 'Unassigned during asset update', TRUE)
+            `, [id, currentUserId]);
+            
+            // Force status to Available
+            const [[availableStatus]] = await connection.query("SELECT status_id FROM asset_status WHERE status_name = 'Available'");
+            await connection.query('UPDATE assets SET status_id = ? WHERE asset_id = ?', [availableStatus.status_id, id]);
+        }
 
         // Specs Update (simplistic: delete and insert)
         await connection.query('DELETE FROM cpu_details WHERE asset_id = ?', [id]);

@@ -1,20 +1,55 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, ArrowRightLeft, Undo2, AlertTriangle, Wrench, CheckCircle } from "lucide-react";
-import { recentActivity } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchHistory } from "@/lib/api";
 
 export function NotificationsDropdown() {
-  const [notifications, setNotifications] = useState(recentActivity);
-  const [unread, setUnread] = useState(recentActivity.length);
+  const { data: history = [], isLoading } = useQuery({ queryKey: ['history'], queryFn: fetchHistory });
   const [open, setOpen] = useState(false);
+  const [lastReadId, setLastReadId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lastReadNotificationId');
+      if (saved) {
+        setLastReadId(parseInt(saved, 10));
+      }
+    }
+  }, []);
+
+  const notifications = useMemo(() => {
+    return history.map((h: any) => ({
+      id: h.id,
+      type: h.status === 'Assigned' ? 'assign' : h.status === 'Returned' ? 'withdraw' : 'create',
+      text: h.status === 'Assigned' 
+        ? `${h.assetId} assigned to ${h.user || 'User'}`
+        : h.status === 'Returned'
+        ? `${h.assetId} returned from ${h.user || 'User'}`
+        : `${h.assetId} - ${h.status}`,
+      time: h.status === 'Assigned' ? h.assignedDate : h.returnedDate || h.assignedDate
+    }));
+  }, [history]);
+
+  // Filter to only show unread notifications in the list
+  const unreadNotifications = useMemo(() => {
+    if (!notifications.length) return [];
+    if (lastReadId === null) return notifications;
+    return notifications.filter((n: any) => n.id > lastReadId);
+  }, [notifications, lastReadId]);
+
+  const unread = unreadNotifications.length;
+
+  const markAsRead = () => {
+    if (notifications.length > 0) {
+      const topId = notifications[0].id;
+      setLastReadId(topId);
+      localStorage.setItem('lastReadNotificationId', topId.toString());
+    }
+  };
 
   const handleOpen = (val: boolean) => {
     setOpen(val);
-    if (val) {
-      // Mark all as read when opening
-      setUnread(0);
-    }
   };
 
   return (
@@ -30,12 +65,18 @@ export function NotificationsDropdown() {
       <PopoverContent align="end" className="w-[380px] p-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="font-semibold text-sm">Notifications</h3>
-          <span className="text-xs text-muted-foreground">{notifications.length} recent</span>
+          <span className="text-xs text-muted-foreground">{unread} unread</span>
         </div>
-        <ScrollArea className="max-h-[400px]">
-          {notifications.length > 0 ? (
+        
+        {/* Replaced ScrollArea with a native div for reliable scrolling */}
+        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Loading...
+            </div>
+          ) : unreadNotifications.length > 0 ? (
             <div className="divide-y">
-              {notifications.map((activity) => (
+              {unreadNotifications.map((activity: any) => (
                 <div key={activity.id} className="p-4 flex gap-3 hover:bg-muted/50 transition-colors">
                   <div className="size-8 shrink-0 rounded-full bg-accent grid place-items-center mt-0.5">
                     {activity.type === "assign" ? (
@@ -62,11 +103,16 @@ export function NotificationsDropdown() {
               You're all caught up!
             </div>
           )}
-        </ScrollArea>
-        {notifications.length > 0 && (
+        </div>
+        
+        {unreadNotifications.length > 0 && (
           <div className="p-2 border-t text-center">
             <button 
-              onClick={() => { setNotifications([]); setUnread(0); }}
+              onClick={(e) => { 
+                e.preventDefault();
+                markAsRead(); 
+                // Keep dropdown open but it will show "You're all caught up!"
+              }}
               className="w-full h-8 text-xs font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors">
               Mark all as read
             </button>

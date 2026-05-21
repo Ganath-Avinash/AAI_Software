@@ -5,7 +5,23 @@ import { fetchUsers, fetchLocations, fetchVendors } from "@/lib/api";
 import type { Asset } from "@/lib/mock-data";
 import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 
+const typePrefixes: Record<string, string> = {
+  "Laptop": "AAI-ASS-LP-",
+  "Desktop CPU": "AAI-ASS-DK-",
+  "Monitor": "AAI-ASS-MO-",
+  "Printer": "AAI-ASS-PR-",
+  "Scanner": "AAI-ASS-SC-",
+  "UPS": "AAI-ASS-UP-",
+  "Webcam": "AAI-ASS-WC-",
+  "HDD": "AAI-ASS-HD-",
+  "Headset": "AAI-ASS-HS-",
+  "Router": "AAI-ASS-RT-",
+  "Switch": "AAI-ASS-SW-",
+};
+
 type FormData = {
+  id?: string;
+  idNumber?: string;
   type: Asset["type"];
   make: string;
   model: string;
@@ -21,6 +37,7 @@ type FormData = {
 };
 
 const empty: FormData = {
+  idNumber: "",
   type: "Laptop",
   make: "",
   model: "",
@@ -61,7 +78,15 @@ export function AssetFormDialog({
     if (open) {
       setStep(1);
       if (initial) {
+        let idNum = "";
+        let prefix = typePrefixes[initial.type] || "AAI-ASS-";
+        if (initial.id && initial.id.startsWith(prefix)) {
+            idNum = initial.id.substring(prefix.length);
+        }
+        
         setForm({
+          id: initial.id,
+          idNumber: idNum,
           type: initial.type,
           make: initial.make,
           model: initial.model,
@@ -100,12 +125,13 @@ export function AssetFormDialog({
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!form.model?.trim() || !form.serial?.trim()) return;
+    if (!form.model?.trim() || !form.serial?.trim() || (!initial && !form.idNumber?.trim())) return;
     
     if (step < maxStep) {
       setStep(step + 1);
     } else {
-      onSubmit(form);
+      const finalId = initial ? form.id : `${typePrefixes[form.type] || "AAI-ASS-"}${form.idNumber}`;
+      onSubmit({ ...form, id: finalId });
     }
   };
 
@@ -136,8 +162,23 @@ export function AssetFormDialog({
         <form onSubmit={handleSubmit} className="text-sm">
           {step === 1 && (
             <div className="grid grid-cols-2 gap-3 min-h-[300px]">
-              <Field label="Type">
-                <select value={form.type} onChange={e => set("type", e.target.value as Asset["type"])} className={inputCls}>
+              <Field label="Asset ID" className="col-span-2 sm:col-span-1">
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm whitespace-nowrap">
+                    {typePrefixes[form.type] || "AAI-ASS-"}
+                  </span>
+                  <input 
+                    required={!initial}
+                    readOnly={!!initial}
+                    value={form.idNumber || ""} 
+                    onChange={e => set("idNumber", e.target.value)} 
+                    className={`w-full h-9 px-3 rounded-r-md border bg-background text-sm outline-none focus:border-ring ${initial ? 'opacity-50' : ''}`}
+                    placeholder="e.g. 1001"
+                  />
+                </div>
+              </Field>
+              <Field label="Type" className="col-span-2 sm:col-span-1">
+                <select disabled={!!initial} value={form.type} onChange={e => set("type", e.target.value as Asset["type"])} className={`${inputCls} ${initial ? 'opacity-50' : ''}`}>
                   {types.map(t => <option key={t}>{t}</option>)}
                 </select>
               </Field>

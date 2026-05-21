@@ -32,6 +32,7 @@ function AssetDetail() {
     mutationFn: (data: any) => updateAsset(params.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['asset', params.id] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
       setEditOpen(false);
     }
   });

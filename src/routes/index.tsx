@@ -11,8 +11,8 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [u, setU] = useState("admin");
-  const [p, setP] = useState("aai2026");
+  const [u, setU] = useState("");
+  const [p, setP] = useState("");
   const [error, setError] = useState("");
 
   const submit = (e: React.FormEvent) => {

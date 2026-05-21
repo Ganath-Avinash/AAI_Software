@@ -110,7 +110,14 @@ function Dashboard() {
                   {a.status === "Assigned" ? <ArrowRightLeft className="size-3.5" /> : a.status === "Returned" ? <Undo2 className="size-3.5" /> : <Wrench className="size-3.5" />}
                 </div>
                 <div className="text-sm">
-                  <div>{a.action}</div>
+                  <div>
+                    {a.status === 'Assigned' 
+                      ? `${a.assetId} assigned to ${a.user || 'User'}`
+                      : a.status === 'Returned'
+                      ? `${a.assetId} returned from ${a.user || 'User'}`
+                      : `${a.assetId} - ${a.status}`
+                    }
+                  </div>
                   <div className="text-xs text-muted-foreground mt-0.5">{a.assignedDate || a.returnedDate}</div>
                 </div>
               </li>
