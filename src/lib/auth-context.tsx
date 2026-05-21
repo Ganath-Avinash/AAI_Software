@@ -12,8 +12,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const DEFAULT_PASSWORDS = {
-  admin: "aai2026",
-  regular: "password"
+  admin: "admin",
+  regular: "regular"
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (username: string, pass: string) => {
     const r = username.toLowerCase();
     const storedPass = passwords[r];
-    const defaultPass = r === "admin" ? "aai2026" : "password";
+    const defaultPass = r === "admin" ? "admin" : "regular";
     
     if ((r === "admin" || r === "regular") && (storedPass === pass || defaultPass === pass)) {
       setRole(r as Role);
