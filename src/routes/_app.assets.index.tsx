@@ -32,6 +32,9 @@ function AssetsList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       setOpen(false);
+    },
+    onError: (err: any) => {
+      alert("Failed to save asset: " + err.message);
     }
   });
   const filtered = useMemo(() => assets.filter((a: any) => {
@@ -68,6 +71,7 @@ function AssetsList() {
         onSubmit={(data) => {
           createMutation.mutate({ ...data, assignedTo: data.assignedTo || null });
         }}
+        isSubmitting={createMutation.isPending}
       />
 
 
@@ -80,7 +84,7 @@ function AssetsList() {
           </div>
           <select value={type} onChange={e => setType(e.target.value)} className="h-9 px-3 rounded-md border bg-background text-sm">
             <option value="all">All types</option>
-            {types.map(t => <option key={t}>{t}</option>)}
+            {types.map((t: string) => <option key={t}>{t}</option>)}
           </select>
           <select value={status} onChange={e => setStatus(e.target.value)} className="h-9 px-3 rounded-md border bg-background text-sm">
             <option value="all">All statuses</option>

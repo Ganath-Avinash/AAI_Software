@@ -143,6 +143,26 @@ CREATE TABLE IF NOT EXISTS cpu_details (
     storage_size VARCHAR(20),
     storage_type_id INT,
     os_id INT,
+    processor_speed VARCHAR(50),
+    chipset VARCHAR(100),
+    ram_speed VARCHAR(50),
+    ram_slots VARCHAR(50),
+    storage_make_model VARCHAR(150),
+    cd_drive VARCHAR(100),
+    speaker VARCHAR(100),
+    os_key VARCHAR(100),
+    office_suite VARCHAR(100),
+    office_suite_key VARCHAR(100),
+    adobe_acrobat VARCHAR(100),
+    adobe_acrobat_key VARCHAR(100),
+    keyboard_id VARCHAR(50),
+    keyboard_serial VARCHAR(100),
+    keyboard_make VARCHAR(100),
+    keyboard_model VARCHAR(100),
+    mouse_id VARCHAR(50),
+    mouse_serial VARCHAR(100),
+    mouse_make VARCHAR(100),
+    mouse_model VARCHAR(100),
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE,
     FOREIGN KEY (processor_id) REFERENCES processors(processor_id),
     FOREIGN KEY (ram_type_id) REFERENCES ram_types(ram_type_id),
@@ -157,10 +177,18 @@ CREATE TABLE IF NOT EXISTS cpu_details (
 CREATE TABLE IF NOT EXISTS laptop_details (
     asset_id VARCHAR(50) PRIMARY KEY,
     processor_id INT,
+    processor_speed VARCHAR(50),
+    chipset VARCHAR(100),
     ram_size VARCHAR(20),
     ram_type_id INT,
+    ram_speed VARCHAR(50),
+    ram_slots VARCHAR(50),
     storage_size VARCHAR(20),
     storage_type_id INT,
+    storage_make_model VARCHAR(150),
+    cd_drive VARCHAR(100),
+    dvd_drive VARCHAR(100),
+    speaker VARCHAR(100),
     os_id INT,
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE,
     FOREIGN KEY (processor_id) REFERENCES processors(processor_id),
@@ -226,5 +254,18 @@ CREATE TABLE IF NOT EXISTS network_details (
     mac_ethernet VARCHAR(50),
     mac_wifi VARCHAR(50),
     mac_bluetooth VARCHAR(50),
+    FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE
+);
+
+-- =========================================================
+-- EQUIPMENT SPECS
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS equipment_specs (
+    spec_id INT AUTO_INCREMENT PRIMARY KEY,
+    asset_id VARCHAR(50) NOT NULL,
+    capacity VARCHAR(100),
+    technology VARCHAR(100),
+    data_field VARCHAR(100),
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE
 );

@@ -1,79 +1,71 @@
 const API_BASE = 'http://localhost:5000/api';
 
-export async function fetchDashboardStats() {
-    const res = await fetch(`${API_BASE}/dashboard/stats`);
-    if (!res.ok) throw new Error('Failed to fetch stats');
+const handleResponse = async (res: Response, defaultMessage: string) => {
+    if (!res.ok) {
+        let errorMsg = defaultMessage;
+        try {
+            const errBody = await res.json();
+            if (errBody.error) errorMsg = errBody.error;
+        } catch(e) {}
+        throw new Error(errorMsg);
+    }
     return res.json();
+};
+
+export async function fetchDashboardStats() {
+    return handleResponse(await fetch(`${API_BASE}/dashboard/stats`), 'Failed to fetch stats');
 }
 
 export async function fetchAssets() {
-    const res = await fetch(`${API_BASE}/assets`);
-    if (!res.ok) throw new Error('Failed to fetch assets');
-    return res.json();
+    return handleResponse(await fetch(`${API_BASE}/assets`), 'Failed to fetch assets');
 }
 
 export async function fetchAsset(id: string) {
-    const res = await fetch(`${API_BASE}/assets/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch asset');
-    return res.json();
+    return handleResponse(await fetch(`${API_BASE}/assets/${id}`), 'Failed to fetch asset');
 }
 
 export async function createAsset(data: any) {
-    const res = await fetch(`${API_BASE}/assets`, {
+    return handleResponse(await fetch(`${API_BASE}/assets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to create asset');
-    return res.json();
+    }), 'Failed to create asset');
 }
 
 export async function updateAsset(id: string, data: any) {
-    const res = await fetch(`${API_BASE}/assets/${id}`, {
+    return handleResponse(await fetch(`${API_BASE}/assets/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to update asset');
-    return res.json();
+    }), 'Failed to update asset');
 }
 
 export async function fetchUsers() {
-    const res = await fetch(`${API_BASE}/users`);
-    if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    return handleResponse(await fetch(`${API_BASE}/users`), 'Failed to fetch users');
 }
 
 export async function fetchUser(id: string) {
-    const res = await fetch(`${API_BASE}/users/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch user');
-    return res.json();
+    return handleResponse(await fetch(`${API_BASE}/users/${id}`), 'Failed to fetch user');
 }
 
 export async function createUser(data: any) {
-    const res = await fetch(`${API_BASE}/users`, {
+    return handleResponse(await fetch(`${API_BASE}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to create user');
-    return res.json();
+    }), 'Failed to create user');
 }
 
 export async function fetchHistory() {
-    const res = await fetch(`${API_BASE}/assignments/history`);
-    if (!res.ok) throw new Error('Failed to fetch history');
-    return res.json();
+    return handleResponse(await fetch(`${API_BASE}/assignments/history`), 'Failed to fetch history');
 }
 
 export async function assignAsset(data: { assetId: string, userId: string, remarks?: string }) {
-    const res = await fetch(`${API_BASE}/assignments/assign`, {
+    return handleResponse(await fetch(`${API_BASE}/assignments/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to assign asset');
-    return res.json();
+    }), 'Failed to assign asset');
 }
 
 // Master Tables fetchers

@@ -6,17 +6,27 @@ import type { Asset } from "@/lib/mock-data";
 import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 
 const typePrefixes: Record<string, string> = {
-  "Laptop": "AAI-ASS-LP-",
-  "Desktop CPU": "AAI-ASS-DK-",
-  "Monitor": "AAI-ASS-MO-",
-  "Printer": "AAI-ASS-PR-",
-  "Scanner": "AAI-ASS-SC-",
-  "UPS": "AAI-ASS-UP-",
-  "Webcam": "AAI-ASS-WC-",
-  "HDD": "AAI-ASS-HD-",
-  "Headset": "AAI-ASS-HS-",
-  "Router": "AAI-ASS-RT-",
-  "Switch": "AAI-ASS-SW-",
+  "Laptop": "AAI-SR IT-LP-",
+  "Desktop CPU": "AAI-SR IT-DK-",
+  "Monitor": "AAI-SR IT-MO-",
+  "Printer": "AAI-SR IT-PR-",
+  "Scanner": "AAI-SR IT-SC-",
+  "UPS": "AAI-SR IT-UP-",
+  "Webcam": "AAI-SR IT-WC-",
+  "HDD": "AAI-SR IT-HD-",
+  "Headset": "AAI-SR IT-HS-",
+  "Router": "AAI-SR IT-RT-",
+  "Switch": "AAI-SR IT-SW-",
+  "Keyboard": "AAI-SR IT-KB-",
+  "Mouse": "AAI-SR IT-MS-",
+  "Server": "AAI-SR IT-SR-",
+  "Workstation": "AAI-SR IT-WS-",
+  "Projector": "AAI-SR IT-PJ-",
+  "TV": "AAI-SR IT-TV-",
+  "Tab": "AAI-SR IT-TB-",
+  "Plotter": "AAI-SR IT-PL-",
+  "Camera": "AAI-SR IT-CM-",
+  "AllINONE": "AAI-SR IT-AO-",
 };
 
 type FormData = {
@@ -27,7 +37,11 @@ type FormData = {
   model: string;
   serial: string;
   purchaseDate: string;
+  installDate?: string;
+  supplyOrderNo?: string;
+  warrantyType?: string;
   warrantyUntil: string;
+  remarks?: string;
   status: Asset["status"];
   location: string;
   assignedTo: string;
@@ -43,7 +57,11 @@ const empty: FormData = {
   model: "",
   serial: "",
   purchaseDate: new Date().toISOString().slice(0, 10),
+  installDate: "",
+  supplyOrderNo: "",
+  warrantyType: "",
   warrantyUntil: new Date(Date.now() + 3 * 365 * 86400_000).toISOString().slice(0, 10),
+  remarks: "",
   status: "Available",
   location: "ADMIN-TF",
   assignedTo: "",
@@ -52,7 +70,7 @@ const empty: FormData = {
   network: {},
 };
 
-const types: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch"];
+const types: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE"];
 
 export function AssetFormDialog({
   open,
@@ -60,12 +78,14 @@ export function AssetFormDialog({
   initial,
   onSubmit,
   title,
+  isSubmitting,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial?: Asset | null;
   onSubmit: (data: FormData) => void;
   title: string;
+  isSubmitting?: boolean;
 }) {
   const [form, setForm] = useState<FormData>(empty);
   const [step, setStep] = useState(1);
@@ -79,7 +99,7 @@ export function AssetFormDialog({
       setStep(initial ? 2 : 1);
       if (initial) {
         let idNum = "";
-        let prefix = typePrefixes[initial.type] || "AAI-ASS-";
+        let prefix = typePrefixes[initial.type] || "AAI-SR IT-";
         if (initial.id && initial.id.startsWith(prefix)) {
             idNum = initial.id.substring(prefix.length);
         }
@@ -92,11 +112,15 @@ export function AssetFormDialog({
           model: initial.model,
           serial: initial.serial,
           purchaseDate: initial.purchaseDate,
+          installDate: initial.installDate || "",
+          supplyOrderNo: initial.supplyOrderNo || "",
+          warrantyType: initial.warrantyType || "",
           warrantyUntil: initial.warrantyUntil,
+          remarks: initial.remarks || "",
           status: initial.status,
           location: initial.location,
           assignedTo: initial.assignedTo ?? "",
-          vendor: initial.vendor ?? "",
+          vendor: (initial as any).vendor || "",
           specs: initial.specs || {},
           network: initial.network || {},
         });
@@ -108,14 +132,35 @@ export function AssetFormDialog({
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
   
-  const showSpecs = form.type === "Laptop" || form.type === "Desktop CPU";
+  const showSpecs = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE" || form.type === "Workstation" || form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD";
+  const hasExtended = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE";
   
+  const showStatus = !["TV", "Server", "Tab"].includes(form.type);
+  const showPurchaseDate = !["TV", "Server", "Tab"].includes(form.type);
+  const showLocation = form.type !== "Tab";
+  const showPurchaseStep = form.type !== "Tab";
+  
+  let currentStep = 2;
   const stepsList = [
     { n: 1, label: "Category" },
     { n: 2, label: "Basic Info" },
-    ...(showSpecs ? [{ n: 3, label: "Specs" }] : []),
-    { n: showSpecs ? 4 : 3, label: "Network" },
   ];
+  
+  const purchaseN = showPurchaseStep ? ++currentStep : -1;
+  if (showPurchaseStep) stepsList.push({ n: purchaseN, label: "Purchase & Warranty" });
+  
+  const basicSpecsN = showSpecs ? ++currentStep : -1;
+  if (showSpecs) stepsList.push({ n: basicSpecsN, label: hasExtended ? "Basic Specs" : "Specs" });
+  
+  const extendedSpecsN = hasExtended ? ++currentStep : -1;
+  if (hasExtended) stepsList.push({ n: extendedSpecsN, label: "Ext. HW" });
+  
+  const softwarePeriphN = (form.type === "Desktop CPU" || form.type === "AllINONE") ? ++currentStep : -1;
+  if (softwarePeriphN !== -1) stepsList.push({ n: softwarePeriphN, label: "Software & Periph" });
+  
+  const networkN = ++currentStep;
+  stepsList.push({ n: networkN, label: "Network" });
+  
   const maxStep = stepsList.length;
 
   const handleNext = () => {
@@ -135,14 +180,14 @@ export function AssetFormDialog({
     if (step < maxStep) {
       setStep(step + 1);
     } else {
-      const finalId = initial ? form.id : `${typePrefixes[form.type] || "AAI-ASS-"}${form.idNumber}`;
+      const finalId = initial ? form.id : `${typePrefixes[form.type] || "AAI-SR IT-"}${form.idNumber}`;
       onSubmit({ ...form, id: finalId });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl w-[90vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -183,7 +228,7 @@ export function AssetFormDialog({
               <Field label="Asset ID" className="col-span-2 sm:col-span-1">
                 <div className="flex">
                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm whitespace-nowrap">
-                    {typePrefixes[form.type] || "AAI-ASS-"}
+                    {typePrefixes[form.type] || "AAI-SR IT-"}
                   </span>
                   <input 
                     required={!initial}
@@ -195,14 +240,36 @@ export function AssetFormDialog({
                   />
                 </div>
               </Field>
-              <Field label="Status">
-                <select value={form.status} onChange={e => set("status", e.target.value as Asset["status"])} className={inputCls}>
-                  <option>Available</option><option>Assigned</option><option>Maintenance</option><option>Expired</option>
-                </select>
-              </Field>
+              {showStatus && (
+                <Field label="Status">
+                  <select value={form.status} onChange={e => set("status", e.target.value as Asset["status"])} className={inputCls}>
+                    <option>Available</option><option>Assigned</option><option>Maintenance</option><option>Expired</option>
+                  </select>
+                </Field>
+              )}
               <Field label="Make"><input value={form.make} onChange={e => set("make", e.target.value)} className={inputCls} /></Field>
               <Field label="Model"><input required value={form.model} onChange={e => set("model", e.target.value)} className={inputCls} /></Field>
               <Field label="Serial Number" className="col-span-2"><input required value={form.serial} onChange={e => set("serial", e.target.value)} className={inputCls} /></Field>
+              {showLocation && (
+                <Field label="Location" className={showStatus ? "col-span-2" : "col-span-1"}>
+                  <select value={form.location} onChange={e => set("location", e.target.value)} className={inputCls}>
+                    <option value="">— Select Location —</option>
+                    {locations.map((l: string) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </Field>
+              )}
+              <Field label="Assigned To" className={(!showLocation || !showStatus) ? "col-span-1" : "col-span-2"}>
+                <select value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} className={inputCls}>
+                  <option value="">— Unassigned —</option>
+                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.empId})</option>)}
+                </select>
+              </Field>
+            </div>
+          )}
+
+          {step === purchaseN && showPurchaseStep && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Purchase & Warranty</div>
               <Field label="Supplier/Vendor" className="col-span-2">
                 <input 
                   list="vendors-list" 
@@ -215,36 +282,117 @@ export function AssetFormDialog({
                   {vendors.map((v: any) => <option key={v.id} value={v.name} />)}
                 </datalist>
               </Field>
-              <Field label="Purchase Date"><input type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} className={inputCls} /></Field>
+              <Field label="Supply Order No."><input value={form.supplyOrderNo || ''} onChange={e => set("supplyOrderNo", e.target.value)} className={inputCls} placeholder="e.g. PO-1024" /></Field>
+              
+              {showPurchaseDate && <Field label="Purchase Date"><input type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} className={inputCls} /></Field>}
+              <Field label="Install Date"><input type="date" value={form.installDate || ''} onChange={e => set("installDate", e.target.value)} className={inputCls} /></Field>
+              <div className="col-span-1 hidden sm:block"></div>
+
+              <Field label="Warranty / AMC Type"><input value={form.warrantyType || ''} onChange={e => set("warrantyType", e.target.value)} className={inputCls} placeholder="e.g. 3 Year Comprehensive" /></Field>
               <Field label="Warranty Until"><input type="date" value={form.warrantyUntil} onChange={e => set("warrantyUntil", e.target.value)} className={inputCls} /></Field>
-              <Field label="Location" className="col-span-2">
-                <select value={form.location} onChange={e => set("location", e.target.value)} className={inputCls}>
-                  <option value="">— Select Location —</option>
-                  {locations.map((l: string) => <option key={l} value={l}>{l}</option>)}
-                </select>
-              </Field>
-              <Field label="Assigned To" className="col-span-2">
-                <select value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} className={inputCls}>
-                  <option value="">— Unassigned —</option>
-                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.empId})</option>)}
-                </select>
+              
+              <Field label="Remarks" className="col-span-full">
+                <textarea 
+                  value={form.remarks || ''} 
+                  onChange={e => set("remarks", e.target.value)} 
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]" 
+                  placeholder="Additional notes about purchase, warranty, or condition..."
+                />
               </Field>
             </div>
           )}
 
-          {step === 3 && showSpecs && (
-            <div className="grid grid-cols-2 gap-3 min-h-[300px] content-start p-1">
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Hardware Specifications</div>
-              <Field label="Processor"><input value={form.specs?.Processor || ''} onChange={e => set("specs", { ...form.specs, Processor: e.target.value })} className={inputCls} placeholder="e.g. Intel Core i7" /></Field>
-              <Field label="Operating System"><input value={form.specs?.OS || ''} onChange={e => set("specs", { ...form.specs, OS: e.target.value })} className={inputCls} placeholder="e.g. Windows 11 Pro" /></Field>
-              <Field label="RAM"><input value={form.specs?.RAM || ''} onChange={e => set("specs", { ...form.specs, RAM: e.target.value })} className={inputCls} placeholder="e.g. 16GB" /></Field>
-              <Field label="Storage"><input value={form.specs?.Storage || ''} onChange={e => set("specs", { ...form.specs, Storage: e.target.value })} className={inputCls} placeholder="e.g. 512GB SSD NVMe" /></Field>
+          {step === basicSpecsN && showSpecs && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Hardware Specifications</div>
+              {!(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD") && (
+                <>
+                  <Field label="Processor"><input value={form.specs?.Processor || ''} onChange={e => set("specs", { ...form.specs, Processor: e.target.value })} className={inputCls} placeholder="e.g. Intel Core i7" /></Field>
+                  <Field label="Operating System"><input value={form.specs?.OS || ''} onChange={e => set("specs", { ...form.specs, OS: e.target.value })} className={inputCls} placeholder="e.g. Windows 11 Pro" /></Field>
+                  <Field label="RAM"><input value={form.specs?.RAM || ''} onChange={e => set("specs", { ...form.specs, RAM: e.target.value })} className={inputCls} placeholder="e.g. 16GB" /></Field>
+                  <Field label="Storage"><input value={form.specs?.Storage || ''} onChange={e => set("specs", { ...form.specs, Storage: e.target.value })} className={inputCls} placeholder="e.g. 512GB SSD NVMe" /></Field>
+                </>
+              )}
+              
+              {(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD") && (
+                <>
+                  {(form.type === "UPS" || form.type === "Switch") && <Field label="Capacity"><input value={form.specs?.Capacity || ''} onChange={e => set("specs", { ...form.specs, Capacity: e.target.value })} className={inputCls} placeholder={form.type === "UPS" ? "e.g. 2KVA" : "e.g. 24-Port"} /></Field>}
+                  {form.type === "HDD" && <Field label="Size"><input value={form.specs?.Capacity || ''} onChange={e => set("specs", { ...form.specs, Capacity: e.target.value })} className={inputCls} placeholder="e.g. 1TB" /></Field>}
+                  {form.type !== "HDD" && <Field label="Technology"><input value={form.specs?.Technology || ''} onChange={e => set("specs", { ...form.specs, Technology: e.target.value })} className={inputCls} placeholder={form.type === "UPS" ? "e.g. Line-Interactive" : form.type === "Monitor" ? "e.g. IPS LED" : "e.g. Managed Layer 3"} /></Field>}
+                  {form.type === "Monitor" && <Field label="Data"><input value={form.specs?.Data || ''} onChange={e => set("specs", { ...form.specs, Data: e.target.value })} className={inputCls} placeholder="e.g. 24 inch 1080p" /></Field>}
+                </>
+              )}
+            </div>
+          )}
+
+          {step === extendedSpecsN && hasExtended && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
+              {(form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE") && (
+                <>
+                  <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">Extended Hardware Specs</div>
+                  <Field label="Processor Speed"><input value={form.specs?.ProcessorSpeed || ''} onChange={e => set("specs", { ...form.specs, ProcessorSpeed: e.target.value })} className={inputCls} placeholder="e.g. 2.4 GHz" /></Field>
+                  <Field label="Chipset"><input value={form.specs?.Chipset || ''} onChange={e => set("specs", { ...form.specs, Chipset: e.target.value })} className={inputCls} placeholder="e.g. Intel SoC" /></Field>
+                  <Field label="RAM Speed"><input value={form.specs?.RAMSpeed || ''} onChange={e => set("specs", { ...form.specs, RAMSpeed: e.target.value })} className={inputCls} placeholder="e.g. 3200 MHz" /></Field>
+                  <Field label="RAM Slots"><input value={form.specs?.RAMSlots || ''} onChange={e => set("specs", { ...form.specs, RAMSlots: e.target.value })} className={inputCls} placeholder="e.g. 2 total, 1 free" /></Field>
+                  <Field label="Storage Make/Model"><input value={form.specs?.StorageMakeModel || ''} onChange={e => set("specs", { ...form.specs, StorageMakeModel: e.target.value })} className={inputCls} placeholder="e.g. Samsung 980 Pro" /></Field>
+                  <Field label="CD Drive"><input value={form.specs?.CDDrive || ''} onChange={e => set("specs", { ...form.specs, CDDrive: e.target.value })} className={inputCls} placeholder="e.g. None" /></Field>
+                  {form.type === "Laptop" && <Field label="DVD Drive"><input value={form.specs?.DVDDrive || ''} onChange={e => set("specs", { ...form.specs, DVDDrive: e.target.value })} className={inputCls} placeholder="e.g. Yes" /></Field>}
+                  <Field label="Speaker"><input value={form.specs?.Speaker || ''} onChange={e => set("specs", { ...form.specs, Speaker: e.target.value })} className={inputCls} placeholder="e.g. Built-in Stereo" /></Field>
+                </>
+              )}
+            </div>
+          )}
+
+          {step === softwarePeriphN && (form.type === "Desktop CPU" || form.type === "AllINONE") && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 min-h-[300px] content-start p-2">
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide">Software Licenses</div>
+              <Field label="OS Key" className="col-span-1 sm:col-span-2"><input value={form.specs?.OSKey || ''} onChange={e => set("specs", { ...form.specs, OSKey: e.target.value })} className={inputCls} placeholder="e.g. XXXX-XXXX" /></Field>
+              <Field label="Office Suite" className="col-span-1 sm:col-span-2"><input value={form.specs?.OfficeSuite || ''} onChange={e => set("specs", { ...form.specs, OfficeSuite: e.target.value })} className={inputCls} placeholder="e.g. Office 2021" /></Field>
+              <Field label="Office Suite Key" className="col-span-1 sm:col-span-2"><input value={form.specs?.OfficeSuiteKey || ''} onChange={e => set("specs", { ...form.specs, OfficeSuiteKey: e.target.value })} className={inputCls} placeholder="e.g. XXXX-XXXX" /></Field>
+              <Field label="Adobe Acrobat" className="col-span-1 sm:col-span-2"><input value={form.specs?.AdobeAcrobat || ''} onChange={e => set("specs", { ...form.specs, AdobeAcrobat: e.target.value })} className={inputCls} placeholder="e.g. Acrobat Pro 2020" /></Field>
+              <Field label="Acrobat Key" className="col-span-1 sm:col-span-4"><input value={form.specs?.AdobeAcrobatKey || ''} onChange={e => set("specs", { ...form.specs, AdobeAcrobatKey: e.target.value })} className={inputCls} placeholder="e.g. XXXX-XXXX" /></Field>
+
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-4 border-t pt-4">Keyboard Details</div>
+              <Field label="Keyboard ID">
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm whitespace-nowrap">
+                    AAI-SR IT-KB-
+                  </span>
+                  <input 
+                    value={form.specs?.KeyboardID?.replace('AAI-SR IT-KB-', '') || ''} 
+                    onChange={e => set("specs", { ...form.specs, KeyboardID: e.target.value ? 'AAI-SR IT-KB-' + e.target.value : '' })} 
+                    className="w-full h-9 px-3 rounded-r-md border bg-background text-sm outline-none focus:border-ring" 
+                    placeholder="1001" 
+                  />
+                </div>
+              </Field>
+              <Field label="Serial Number"><input value={form.specs?.KeyboardSerial || ''} onChange={e => set("specs", { ...form.specs, KeyboardSerial: e.target.value })} className={inputCls} /></Field>
+              <Field label="Make"><input value={form.specs?.KeyboardMake || ''} onChange={e => set("specs", { ...form.specs, KeyboardMake: e.target.value })} className={inputCls} placeholder="e.g. Logitech" /></Field>
+              <Field label="Model"><input value={form.specs?.KeyboardModel || ''} onChange={e => set("specs", { ...form.specs, KeyboardModel: e.target.value })} className={inputCls} placeholder="e.g. K120" /></Field>
+
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">Mouse Details</div>
+              <Field label="Mouse ID">
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm whitespace-nowrap">
+                    AAI-SR IT-MS-
+                  </span>
+                  <input 
+                    value={form.specs?.MouseID?.replace('AAI-SR IT-MS-', '') || ''} 
+                    onChange={e => set("specs", { ...form.specs, MouseID: e.target.value ? 'AAI-SR IT-MS-' + e.target.value : '' })} 
+                    className="w-full h-9 px-3 rounded-r-md border bg-background text-sm outline-none focus:border-ring" 
+                    placeholder="1001" 
+                  />
+                </div>
+              </Field>
+              <Field label="Serial Number"><input value={form.specs?.MouseSerial || ''} onChange={e => set("specs", { ...form.specs, MouseSerial: e.target.value })} className={inputCls} /></Field>
+              <Field label="Make"><input value={form.specs?.MouseMake || ''} onChange={e => set("specs", { ...form.specs, MouseMake: e.target.value })} className={inputCls} placeholder="e.g. Logitech" /></Field>
+              <Field label="Model"><input value={form.specs?.MouseModel || ''} onChange={e => set("specs", { ...form.specs, MouseModel: e.target.value })} className={inputCls} placeholder="e.g. M100" /></Field>
             </div>
           )}
 
           {step === maxStep && (
-            <div className="grid grid-cols-2 gap-3 min-h-[300px] content-start p-1">
-              <div className="col-span-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Network Information (Optional)</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Network Information (Optional)</div>
               <Field label="Hostname"><input value={form.network?.hostname || ''} onChange={e => set("network", { ...form.network, hostname: e.target.value })} className={inputCls} /></Field>
               <Field label="IP Address"><input value={form.network?.ip || ''} onChange={e => set("network", { ...form.network, ip: e.target.value })} className={inputCls} /></Field>
               <Field label="Ethernet MAC"><input value={form.network?.macEthernet || ''} onChange={e => set("network", { ...form.network, macEthernet: e.target.value })} className={inputCls} placeholder="00:00:00:00:00:00" /></Field>
@@ -262,7 +410,9 @@ export function AssetFormDialog({
               {step < maxStep ? (
                 <button type="button" onClick={(e) => { e.preventDefault(); handleNext(); }} className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-1">Next <ArrowRight className="size-4"/></button>
               ) : (
-                <button type="button" onClick={handleSubmit} className="h-9 px-6 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">Save Asset</button>
+                <button type="button" disabled={isSubmitting} onClick={handleSubmit} className="h-9 px-6 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {isSubmitting ? "Saving..." : "Save Asset"}
+                </button>
               )}
             </div>
           </DialogFooter>

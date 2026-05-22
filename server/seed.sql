@@ -18,7 +18,7 @@ INSERT IGNORE INTO employee_types (employee_type_name) VALUES
 
 -- Asset Types
 INSERT IGNORE INTO asset_types (asset_type_name) VALUES 
-('Laptop'), ('Desktop CPU'), ('Monitor'), ('Printer'), ('Scanner'), ('UPS'), ('Webcam'), ('HDD'), ('Headset'), ('Router'), ('Switch');
+('Laptop'), ('Desktop CPU'), ('Monitor'), ('Printer'), ('Scanner'), ('UPS'), ('Webcam'), ('HDD'), ('Headset'), ('Router'), ('Switch'), ('Keyboard'), ('Mouse'), ('Server'), ('Workstation'), ('Projector'), ('TV'), ('Tab'), ('Plotter'), ('Camera'), ('AllINONE');
 
 -- Asset Status
 INSERT IGNORE INTO asset_status (status_name) VALUES 

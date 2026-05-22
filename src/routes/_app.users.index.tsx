@@ -89,7 +89,7 @@ function UsersList() {
             <Filter className="size-4 text-muted-foreground" />
             <select value={dept} onChange={e => setDept(e.target.value)} className="h-9 px-3 rounded-md border bg-background text-sm outline-none">
               <option value="all">All departments</option>
-              {departments.map(d => <option key={d}>{d}</option>)}
+              {departments.map((d: any) => <option key={d}>{d}</option>)}
             </select>
           </div>
         </div>

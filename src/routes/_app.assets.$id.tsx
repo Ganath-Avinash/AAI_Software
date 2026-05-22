@@ -34,6 +34,9 @@ function AssetDetail() {
       queryClient.invalidateQueries({ queryKey: ['asset', params.id] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       setEditOpen(false);
+    },
+    onError: (err: any) => {
+      alert("Failed to update asset: " + err.message);
     }
   });
 
@@ -103,11 +106,20 @@ function AssetDetail() {
           <div className="bg-card border rounded-lg p-4 space-y-3 text-sm">
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Asset Info</h3>
             <Row icon={Hash} label="Serial Number" value={asset.serial} />
-            <Row icon={MapPin} label="Location" value={asset.location} />
-            <Row icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />
-            <Row icon={Calendar} label="Warranty Until" value={asset.warrantyUntil} />
             <Row icon={UserIcon} label="Make" value={asset.make} />
-            {asset.vendor && <Row icon={Store} label="Supplier" value={asset.vendor} />}
+            {asset.type !== "Tab" && <Row icon={MapPin} label="Location" value={asset.location} />}
+            {!["TV", "Server", "Tab"].includes(asset.type) && <Row icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />}
+            
+            {asset.type !== "Tab" && (
+              <>
+                <Row icon={Calendar} label="Install Date" value={asset.installDate} />
+                {asset.supplyOrderNo && <Row icon={Hash} label="Supply Order No." value={asset.supplyOrderNo} />}
+                {asset.warrantyType && <Row icon={MapPin} label="Warranty Type" value={asset.warrantyType} />}
+                <Row icon={Calendar} label="Warranty Until" value={asset.warrantyUntil} />
+                {asset.vendor && <Row icon={Store} label="Supplier" value={asset.vendor} />}
+                {asset.remarks && <Row icon={Hash} label="Remarks" value={asset.remarks} />}
+              </>
+            )}
           </div>
         </div>
 
@@ -131,14 +143,42 @@ function AssetDetail() {
 
           <div className="p-5">
             {tab === "overview" && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {asset.specs && Object.entries(asset.specs as Record<string,string>).map(([k, v]) => (
-                  <div key={k} className="p-3 rounded-md bg-muted/40">
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">{k}</div>
-                    <div className="text-sm font-medium mt-0.5">{v}</div>
+              <div className="space-y-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {asset.specs && Object.entries(asset.specs as Record<string,string>)
+                    .filter(([k]) => !k.startsWith("Keyboard") && !k.startsWith("Mouse"))
+                    .map(([k, v]) => (
+                    <div key={k} className="p-3 rounded-md bg-muted/40">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+                      <div className="text-sm font-medium mt-0.5">{v}</div>
+                    </div>
+                  ))}
+                  {!asset.specs && <Empty text="No detailed specs available." />}
+                </div>
+
+                {asset.specs && (asset.specs.KeyboardID || asset.specs.KeyboardMake || asset.specs.KeyboardSerial || asset.specs.KeyboardModel) && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Keyboard</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border rounded-lg bg-card">
+                      <div><div className="text-xs text-muted-foreground mb-1">ID</div><div className="text-sm font-medium truncate">{asset.specs.KeyboardID || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Serial</div><div className="text-sm font-medium truncate">{asset.specs.KeyboardSerial || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Make</div><div className="text-sm font-medium truncate">{asset.specs.KeyboardMake || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Model</div><div className="text-sm font-medium truncate">{asset.specs.KeyboardModel || "-"}</div></div>
+                    </div>
                   </div>
-                ))}
-                {!asset.specs && <Empty text="No detailed specs available." />}
+                )}
+                
+                {asset.specs && (asset.specs.MouseID || asset.specs.MouseMake || asset.specs.MouseSerial || asset.specs.MouseModel) && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mouse</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border rounded-lg bg-card">
+                      <div><div className="text-xs text-muted-foreground mb-1">ID</div><div className="text-sm font-medium truncate">{asset.specs.MouseID || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Serial</div><div className="text-sm font-medium truncate">{asset.specs.MouseSerial || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Make</div><div className="text-sm font-medium truncate">{asset.specs.MouseMake || "-"}</div></div>
+                      <div><div className="text-xs text-muted-foreground mb-1">Model</div><div className="text-sm font-medium truncate">{asset.specs.MouseModel || "-"}</div></div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {tab === "network" && (

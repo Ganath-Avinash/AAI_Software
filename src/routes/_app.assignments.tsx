@@ -45,7 +45,7 @@ function AssignPage() {
     }
   });
 
-  const assetTypes = Array.from(new Set(available.map((a: any) => a.type)));
+  const assetTypes: string[] = Array.from(new Set(available.map((a: any) => String(a.type))));
   const [selectedType, setSelectedType] = useState<string>(assetTypes[0] || "");
 
   return (

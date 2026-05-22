@@ -39,12 +39,16 @@ export interface HistoryEvent {
 
 export interface Asset {
   id: string;
-  type: "Laptop" | "Desktop CPU" | "Monitor" | "Printer" | "Scanner" | "UPS" | "Webcam" | "HDD" | "Headset" | "Router" | "Switch";
+  type: "Laptop" | "Desktop CPU" | "Monitor" | "Printer" | "Scanner" | "UPS" | "Webcam" | "HDD" | "Headset" | "Router" | "Switch" | "Keyboard" | "Mouse" | "Server" | "Workstation" | "Projector" | "TV" | "Tab" | "Plotter" | "Camera" | "AllINONE";
   make: string;
   model: string;
   serial: string;
   purchaseDate: string;
+  installDate?: string;
+  supplyOrderNo?: string;
+  warrantyType?: string;
   warrantyUntil: string;
+  remarks?: string;
   status: Status;
   location: string;
   assignedTo: string | null; // user id
@@ -80,7 +84,7 @@ export const users: User[] = Array.from({ length: 24 }).map((_, i) => ({
   assetIds: [],
 }));
 
-const assetTypes: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch"];
+const assetTypes: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE"];
 const makes: Record<Asset["type"], string[]> = {
   "Laptop": ["Dell Latitude 5430","HP EliteBook 840","Lenovo ThinkPad T14"],
   "Desktop CPU": ["HP ProDesk 600","Dell OptiPlex 7090","Lenovo ThinkCentre M70"],
@@ -93,6 +97,16 @@ const makes: Record<Asset["type"], string[]> = {
   "Headset": ["Jabra Evolve 30","Plantronics C3220","Logitech H390"],
   "Router": ["Cisco ISR 1100","MikroTik hAP","TP-Link ER605"],
   "Switch": ["Cisco Catalyst 2960","HP Aruba 1930","D-Link DGS-1210"],
+  "Keyboard": ["Logitech K120", "Dell KB216", "HP K1500"],
+  "Mouse": ["Logitech M100", "Dell MS116", "HP X1000"],
+  "Server": ["Dell PowerEdge", "HP ProLiant", "Lenovo ThinkSystem"],
+  "Workstation": ["Dell Precision", "HP ZBook", "Lenovo ThinkPad P"],
+  "Projector": ["Epson EB-X06", "BenQ MS560", "Sony VPL-DX221"],
+  "TV": ["Samsung 55inch", "LG 65inch", "Sony Bravia"],
+  "Tab": ["iPad Pro", "Samsung Galaxy Tab", "Lenovo Tab"],
+  "Plotter": ["HP DesignJet", "Canon imagePROGRAF", "Epson SureColor"],
+  "Camera": ["Canon EOS R5", "Nikon Z7", "Sony A7 III"],
+  "AllINONE": ["Dell OptiPlex All-in-One", "HP EliteOne", "Lenovo IdeaCentre AIO"],
 };
 
 function rand<T>(arr: T[], seed: number): T { return arr[seed % arr.length]; }
@@ -104,9 +118,9 @@ export const assets: Asset[] = Array.from({ length: 60 }).map((_, i) => {
   const assignedTo = status === "Assigned" ? users[i % users.length].id : null;
   const purchaseYear = 2019 + (i % 6);
   const warrantyYear = purchaseYear + 3;
-  const isNetworked = ["Laptop","Desktop CPU","Router","Switch","Printer"].includes(type);
+  const isNetworked = ["Laptop","Desktop CPU","Router","Switch","Printer","Server","Workstation","AllINONE"].includes(type);
   return {
-    id: `AAI-AST-${pad(1000 + i)}`,
+    id: `AAI-SR IT-${pad(1000 + i)}`,
     type,
     make: make.split(" ")[0],
     model: make,
@@ -116,7 +130,7 @@ export const assets: Asset[] = Array.from({ length: 60 }).map((_, i) => {
     status,
     location: locations[i % locations.length],
     assignedTo,
-    specs: (type === "Laptop" || type === "Desktop CPU" ? {
+    specs: (type === "Laptop" || type === "Desktop CPU" || type === "AllINONE" || type === "Server" || type === "Workstation" ? {
       CPU: "Intel Core i5-1235U", RAM: "16 GB DDR4", Storage: "512 GB SSD", OS: "Windows 11 Pro", GPU: "Intel Iris Xe"
     } : type === "Monitor" ? { Size: "24 inch", Resolution: "1920x1080", Panel: "IPS", Ports: "HDMI, VGA" }
       : { Notes: "Standard issue peripheral" }) as Record<string, string>,
@@ -129,7 +143,7 @@ export const assets: Asset[] = Array.from({ length: 60 }).map((_, i) => {
       vlan: `VLAN-${100 + (i % 10)}`,
       online: i % 4 !== 0,
     } : undefined,
-    software: type === "Laptop" || type === "Desktop CPU" ? [
+    software: type === "Laptop" || type === "Desktop CPU" || type === "AllINONE" || type === "Server" || type === "Workstation" ? [
       { name: "Microsoft Office 365", version: "2024", licenseKey: `MS-${pad(i*7, 6)}-OFC`, expiresOn: "2026-12-31" },
       { name: "Adobe Acrobat Pro", version: "DC 2024", licenseKey: `ADB-${pad(i*11, 6)}-PRO`, expiresOn: "2026-06-30" },
       { name: "Kaspersky Endpoint", version: "11.9", licenseKey: `KAS-${pad(i*13, 6)}-EP`, expiresOn: "2025-09-15" },
@@ -151,10 +165,10 @@ for (const a of assets) {
 }
 
 export const recentActivity = [
-  { id: 1, type: "assign", text: "Laptop AAI-AST-1023 assigned to Priya Iyer", time: "2 hours ago" },
-  { id: 2, type: "withdraw", text: "Monitor AAI-AST-1011 withdrawn from Rohan Mehta", time: "4 hours ago" },
+  { id: 1, type: "assign", text: "Laptop AAI-SR IT-1023 assigned to Priya Iyer", time: "2 hours ago" },
+  { id: 2, type: "withdraw", text: "Monitor AAI-SR IT-1011 withdrawn from Rohan Mehta", time: "4 hours ago" },
   { id: 3, type: "create", text: "New user Ananya Das onboarded", time: "Yesterday" },
-  { id: 4, type: "assign", text: "Headset AAI-AST-1048 assigned to Kabir Singh", time: "Yesterday" },
+  { id: 4, type: "assign", text: "Headset AAI-SR IT-1048 assigned to Kabir Singh", time: "Yesterday" },
   { id: 5, type: "warranty", text: "Warranty expiring for 6 assets next month", time: "2 days ago" },
 ];
 
@@ -176,7 +190,7 @@ function nextAssetId() {
     const n = parseInt(a.id.split("-").pop() || "0");
     return Math.max(m, n);
   }, 0);
-  return `AAI-AST-${pad(max + 1)}`;
+  return `AAI-SR IT-${pad(max + 1)}`;
 }
 
 export function addUser(data: Omit<User, "id" | "assetIds">) {
