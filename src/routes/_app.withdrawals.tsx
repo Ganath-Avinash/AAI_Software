@@ -1,8 +1,9 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { assets, users, updateAsset, subscribe, withdrawnReports, addWithdrawnReport } from "@/lib/mock-data";
-import { Undo2, Check, Download } from "lucide-react";
-import { useState, useEffect, useReducer } from "react";
+import { Undo2, Check, Download, ArrowRightLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAssets, fetchUsers, returnAsset, fetchWithdrawnReports, createWithdrawnReport } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/withdrawals")({
   beforeLoad: () => {
@@ -13,21 +14,73 @@ export const Route = createFileRoute("/_app/withdrawals")({
   component: WithdrawPage,
 });
 
-function WithdrawPage() {
-  const [, force] = useReducer((x: number) => x + 1, 0);
-  useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
+export interface WithdrawnReport {
+  id: string;
+  slNo: number;
+  user: string;
+  dept: string;
+  model: string;
+  items: number;
+  cwn: string;
+  cpuId: string;
+  monitorId: string;
+  keyboardId: string;
+  mouseId: string;
+  upsId: string;
+  printerId: string;
+  scannerId: string;
+  lapId: string;
+  lapAdap: string;
+  lapBag: string;
+  lapMse: string;
+  wo: string;
+  headset: string;
+  webcam: string;
+  remarks: string;
+}
 
+function WithdrawPage() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"withdraw" | "with_it">("withdraw");
   const [selected, setSelected] = useState<string>("");
   const [success, setSuccess] = useState(false);
-  const assigned = assets.filter(a => a.assignedTo);
+
+  const { data: assets = [] } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: reports = [], isLoading: reportsLoading } = useQuery({ queryKey: ['withdrawnReports'], queryFn: fetchWithdrawnReports });
+  const assigned = assets.filter((a: any) => a.assignedTo);
+
+  const withdrawMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await returnAsset({ assetId: id, remarks: "Withdrawn via App" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        setSelected("");
+      }, 2000);
+    }
+  });
+
+  const reportMutation = useMutation({
+    mutationFn: async (reportData: any) => {
+      await createWithdrawnReport(reportData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawnReports'] });
+    }
+  });
 
   const handleWithdraw = () => {
-    const asset = assets.find(a => a.id === selected);
-    const u = users.find(x => x.id === asset?.assignedTo);
+    const asset = assets.find((a: any) => a.id === selected);
+    const u = users.find((x: any) => x.id === asset?.assignedTo);
 
     if (asset && u) {
-      addWithdrawnReport({
+      reportMutation.mutate({
         user: u.name,
         dept: u.department,
         model: asset.model,
@@ -51,15 +104,8 @@ function WithdrawPage() {
       });
     }
 
-    updateAsset(selected, { status: "Available", assignedTo: null });
-    setSuccess(true);
-    setTimeout(() => {
-      setSuccess(false);
-      setSelected("");
-    }, 2000);
+    withdrawMutation.mutate(selected);
   };
-  
-  // Dummy data removed, now relying on withdrawnReports from mock-data
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
@@ -166,13 +212,14 @@ function WithdrawPage() {
                   <th className="px-4 py-3 font-medium">HEADSET</th>
                   <th className="px-4 py-3 font-medium">WEBCAMERA</th>
                   <th className="px-4 py-3 font-medium">REMARKS</th>
+                  <th className="px-4 py-3 font-medium text-right">ACTION</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {withdrawnReports.length === 0 ? (
-                  <tr><td colSpan={21} className="p-8 text-center text-muted-foreground">No withdrawals logged yet.</td></tr>
+                {reports.length === 0 ? (
+                  <tr><td colSpan={22} className="p-8 text-center text-muted-foreground">No withdrawals logged yet.</td></tr>
                 ) : (
-                  withdrawnReports.map(row => (
+                  reports.map(row => (
                     <tr key={row.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3">{row.slNo}</td>
                       <td className="px-4 py-3 font-medium">{row.user}</td>
@@ -195,6 +242,11 @@ function WithdrawPage() {
                       <td className="px-4 py-3">{row.headset}</td>
                       <td className="px-4 py-3">{row.webcam}</td>
                       <td className="px-4 py-3">{row.remarks}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Link to="/assignments" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                          <ArrowRightLeft className="size-3" /> Re-assign
+                        </Link>
+                      </td>
                     </tr>
                   ))
                 )}

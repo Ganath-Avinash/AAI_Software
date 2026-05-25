@@ -269,3 +269,29 @@ CREATE TABLE IF NOT EXISTS equipment_specs (
     data_field VARCHAR(100),
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE
 );
+C R E A T E   T A B L E   I F   N O T   E X I S T S   w i t h d r a w n _ r e p o r t s   ( 
+         r e p o r t _ i d   I N T   A U T O _ I N C R E M E N T   P R I M A R Y   K E Y , 
+         s l _ n o   I N T , 
+         u s e r _ n a m e   V A R C H A R ( 1 0 0 ) , 
+         d e p a r t m e n t   V A R C H A R ( 1 0 0 ) , 
+         m o d e l   V A R C H A R ( 1 5 0 ) , 
+         i t e m s   I N T , 
+         c w n   V A R C H A R ( 1 0 0 ) , 
+         c p u _ i d   V A R C H A R ( 5 0 ) , 
+         m o n i t o r _ i d   V A R C H A R ( 5 0 ) , 
+         k e y b o a r d _ i d   V A R C H A R ( 5 0 ) , 
+         m o u s e _ i d   V A R C H A R ( 5 0 ) , 
+         u p s _ i d   V A R C H A R ( 5 0 ) , 
+         p r i n t e r _ i d   V A R C H A R ( 5 0 ) , 
+         s c a n n e r _ i d   V A R C H A R ( 5 0 ) , 
+         l a p _ i d   V A R C H A R ( 5 0 ) , 
+         l a p _ a d a p   V A R C H A R ( 5 0 ) , 
+         l a p _ b a g   V A R C H A R ( 5 0 ) , 
+         l a p _ m s e   V A R C H A R ( 5 0 ) , 
+         w o   V A R C H A R ( 5 0 ) , 
+         h e a d s e t   V A R C H A R ( 5 0 ) , 
+         w e b c a m   V A R C H A R ( 5 0 ) , 
+         r e m a r k s   T E X T , 
+         c r e a t e d _ a t   T I M E S T A M P   D E F A U L T   C U R R E N T _ T I M E S T A M P 
+ ) ;  
+ 

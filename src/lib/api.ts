@@ -68,6 +68,26 @@ export async function assignAsset(data: { assetId: string, userId: string, remar
     }), 'Failed to assign asset');
 }
 
+export async function returnAsset(data: { assetId: string, remarks?: string }) {
+    return handleResponse(await fetch(`${API_BASE}/assignments/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }), 'Failed to return asset');
+}
+
+export async function fetchWithdrawnReports() {
+    return handleResponse(await fetch(`${API_BASE}/withdrawals/reports`), 'Failed to fetch withdrawn reports');
+}
+
+export async function createWithdrawnReport(data: any) {
+    return handleResponse(await fetch(`${API_BASE}/withdrawals/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }), 'Failed to create withdrawn report');
+}
+
 // Master Tables fetchers
 export async function fetchDepartments() {
     const res = await fetch(`${API_BASE}/masters/departments`);
