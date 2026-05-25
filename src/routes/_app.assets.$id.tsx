@@ -107,19 +107,19 @@ function AssetDetail() {
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Asset Info</h3>
             <Row icon={Hash} label="Serial Number" value={asset.serial} />
             <Row icon={UserIcon} label="Make" value={asset.make} />
-            {asset.type !== "Tab" && <Row icon={MapPin} label="Location" value={asset.location} />}
-            {!["TV", "Server", "Tab"].includes(asset.type) && <Row icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />}
+            {!["Tab", "Keyboard", "Mouse", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(asset.type) && <Row icon={MapPin} label="Location" value={asset.location} />}
+            {!["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(asset.type) && <Row icon={Calendar} label="Purchase Date" value={asset.purchaseDate} />}
             
-            {asset.type !== "Tab" && (
+            {!["Tab", "IT ACCESS."].includes(asset.type) && (
               <>
                 <Row icon={Calendar} label="Install Date" value={asset.installDate} />
                 {asset.supplyOrderNo && <Row icon={Hash} label="Supply Order No." value={asset.supplyOrderNo} />}
                 {asset.warrantyType && <Row icon={MapPin} label="Warranty Type" value={asset.warrantyType} />}
                 <Row icon={Calendar} label="Warranty Until" value={asset.warrantyUntil} />
                 {asset.vendor && <Row icon={Store} label="Supplier" value={asset.vendor} />}
-                {asset.remarks && <Row icon={Hash} label="Remarks" value={asset.remarks} />}
               </>
             )}
+            {asset.remarks && asset.type !== "IT ACCESS." && <Row icon={Hash} label="Remarks" value={asset.remarks} />}
           </div>
         </div>
 

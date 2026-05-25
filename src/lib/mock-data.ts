@@ -39,7 +39,7 @@ export interface HistoryEvent {
 
 export interface Asset {
   id: string;
-  type: "Laptop" | "Desktop CPU" | "Monitor" | "Printer" | "Scanner" | "UPS" | "Webcam" | "HDD" | "Headset" | "Router" | "Switch" | "Keyboard" | "Mouse" | "Server" | "Workstation" | "Projector" | "TV" | "Tab" | "Plotter" | "Camera" | "AllINONE";
+  type: "Laptop" | "Desktop CPU" | "Monitor" | "Printer" | "Scanner" | "UPS" | "Webcam" | "HDD" | "Headset" | "Router" | "Switch" | "Keyboard" | "Mouse" | "Server" | "Workstation" | "Projector" | "TV" | "Tab" | "Plotter" | "Camera" | "AllINONE" | "IT ACCESS.";
   make: string;
   model: string;
   serial: string;
@@ -84,7 +84,7 @@ export const users: User[] = Array.from({ length: 24 }).map((_, i) => ({
   assetIds: [],
 }));
 
-const assetTypes: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE"];
+const assetTypes: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE","IT ACCESS."];
 const makes: Record<Asset["type"], string[]> = {
   "Laptop": ["Dell Latitude 5430","HP EliteBook 840","Lenovo ThinkPad T14"],
   "Desktop CPU": ["HP ProDesk 600","Dell OptiPlex 7090","Lenovo ThinkCentre M70"],
@@ -107,6 +107,7 @@ const makes: Record<Asset["type"], string[]> = {
   "Plotter": ["HP DesignJet", "Canon imagePROGRAF", "Epson SureColor"],
   "Camera": ["Canon EOS R5", "Nikon Z7", "Sony A7 III"],
   "AllINONE": ["Dell OptiPlex All-in-One", "HP EliteOne", "Lenovo IdeaCentre AIO"],
+  "IT ACCESS.": ["Generic Accessory"],
 };
 
 function rand<T>(arr: T[], seed: number): T { return arr[seed % arr.length]; }
@@ -250,3 +251,43 @@ export const stats = {
   users: users.length,
   activeUsers: users.filter(u => u.status === "Active").length,
 };
+
+export interface WithdrawnReport {
+  id: string;
+  slNo: number;
+  user: string;
+  dept: string;
+  model: string;
+  items: number;
+  cwn: string;
+  cpuId: string;
+  monitorId: string;
+  keyboardId: string;
+  mouseId: string;
+  upsId: string;
+  printerId: string;
+  scannerId: string;
+  lapId: string;
+  lapAdap: string;
+  lapBag: string;
+  lapMse: string;
+  wo: string;
+  headset: string;
+  webcam: string;
+  remarks: string;
+}
+
+export const withdrawnReports: WithdrawnReport[] = [
+  { id: "1", slNo: 1, user: "Priya Iyer", dept: "Air Traffic Control", model: "Dell OptiPlex 7090", items: 5, cwn: "", cpuId: "AAI-SR IT-1015", monitorId: "AAI-SR IT-1016", keyboardId: "AAI-SR IT-KB-102", mouseId: "AAI-SR IT-MS-102", upsId: "AAI-SR IT-1018", printerId: "", scannerId: "", lapId: "", lapAdap: "", lapBag: "", lapMse: "", wo: "", headset: "", webcam: "", remarks: "Transferred" }
+];
+
+export function addWithdrawnReport(data: Omit<WithdrawnReport, "id" | "slNo">) {
+  const newReport = {
+    ...data,
+    id: Math.random().toString(36).substring(7),
+    slNo: withdrawnReports.length + 1,
+  };
+  withdrawnReports.push(newReport);
+  notify();
+  return newReport;
+}

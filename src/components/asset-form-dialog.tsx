@@ -27,6 +27,7 @@ const typePrefixes: Record<string, string> = {
   "Plotter": "AAI-SR IT-PL-",
   "Camera": "AAI-SR IT-CM-",
   "AllINONE": "AAI-SR IT-AO-",
+  "IT ACCESS.": "AAI-SR IT-AC-",
 };
 
 type FormData = {
@@ -70,7 +71,7 @@ const empty: FormData = {
   network: {},
 };
 
-const types: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE"];
+const types: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE","IT ACCESS."];
 
 export function AssetFormDialog({
   open,
@@ -132,13 +133,16 @@ export function AssetFormDialog({
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
   
-  const showSpecs = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE" || form.type === "Workstation" || form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD";
+  const showSpecs = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE" || form.type === "Workstation" || form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD" || form.type === "Mouse" || form.type === "Printer" || form.type === "Scanner";
   const hasExtended = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE";
   
-  const showStatus = !["TV", "Server", "Tab"].includes(form.type);
-  const showPurchaseDate = !["TV", "Server", "Tab"].includes(form.type);
-  const showLocation = form.type !== "Tab";
-  const showPurchaseStep = form.type !== "Tab";
+  const showStatus = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
+  const showPurchaseDate = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
+  const showLocation = !["Tab", "Keyboard", "Mouse", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
+  const showAssignedTo = !["Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
+  const showPurchaseStep = form.type !== "Tab" && form.type !== "IT ACCESS.";
+  const showPurchaseDetails = !["Camera"].includes(form.type);
+  const showNetwork = !["Keyboard", "Mouse", "HDD", "Headset", "Webcam", "Printer", "Scanner", "IT ACCESS."].includes(form.type);
   
   let currentStep = 2;
   const stepsList = [
@@ -158,8 +162,8 @@ export function AssetFormDialog({
   const softwarePeriphN = (form.type === "Desktop CPU" || form.type === "AllINONE") ? ++currentStep : -1;
   if (softwarePeriphN !== -1) stepsList.push({ n: softwarePeriphN, label: "Software & Periph" });
   
-  const networkN = ++currentStep;
-  stepsList.push({ n: networkN, label: "Network" });
+  const networkN = showNetwork ? ++currentStep : -1;
+  if (showNetwork) stepsList.push({ n: networkN, label: "Network" });
   
   const maxStep = stepsList.length;
 
@@ -184,6 +188,8 @@ export function AssetFormDialog({
       onSubmit({ ...form, id: finalId });
     }
   };
+
+  const showFullNetwork = !["Camera"].includes(form.type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -225,7 +231,7 @@ export function AssetFormDialog({
 
           {step === 2 && (
             <div className="grid grid-cols-2 gap-3 min-h-[300px]">
-              <Field label="Asset ID" className="col-span-2 sm:col-span-1">
+              <Field label={form.type === "Camera" ? "Material / Asset ID" : "Asset ID"} className="col-span-2 sm:col-span-1">
                 <div className="flex">
                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm whitespace-nowrap">
                     {typePrefixes[form.type] || "AAI-SR IT-"}
@@ -258,38 +264,44 @@ export function AssetFormDialog({
                   </select>
                 </Field>
               )}
-              <Field label="Assigned To" className={(!showLocation || !showStatus) ? "col-span-1" : "col-span-2"}>
-                <select value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} className={inputCls}>
-                  <option value="">— Unassigned —</option>
-                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.empId})</option>)}
-                </select>
-              </Field>
+              {showAssignedTo && (
+                <Field label="Assigned To" className={(!showLocation || !showStatus) ? "col-span-1" : "col-span-2"}>
+                  <select value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} className={inputCls}>
+                    <option value="">— Unassigned —</option>
+                    {users.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.empId})</option>)}
+                  </select>
+                </Field>
+              )}
             </div>
           )}
 
           {step === purchaseN && showPurchaseStep && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
               <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Purchase & Warranty</div>
-              <Field label="Supplier/Vendor" className="col-span-2">
-                <input 
-                  list="vendors-list" 
-                  value={form.vendor || ''} 
-                  onChange={e => set("vendor", e.target.value)} 
-                  className={inputCls} 
-                  placeholder="Type or select a vendor" 
-                />
-                <datalist id="vendors-list">
-                  {vendors.map((v: any) => <option key={v.id} value={v.name} />)}
-                </datalist>
-              </Field>
-              <Field label="Supply Order No."><input value={form.supplyOrderNo || ''} onChange={e => set("supplyOrderNo", e.target.value)} className={inputCls} placeholder="e.g. PO-1024" /></Field>
-              
-              {showPurchaseDate && <Field label="Purchase Date"><input type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} className={inputCls} /></Field>}
-              <Field label="Install Date"><input type="date" value={form.installDate || ''} onChange={e => set("installDate", e.target.value)} className={inputCls} /></Field>
-              <div className="col-span-1 hidden sm:block"></div>
+              {showPurchaseDetails && (
+                <>
+                  <Field label="Supplier/Vendor" className="col-span-2">
+                    <input 
+                      list="vendors-list" 
+                      value={form.vendor || ''} 
+                      onChange={e => set("vendor", e.target.value)} 
+                      className={inputCls} 
+                      placeholder="Type or select a vendor" 
+                    />
+                    <datalist id="vendors-list">
+                      {vendors.map((v: any) => <option key={v.id} value={v.name} />)}
+                    </datalist>
+                  </Field>
+                  <Field label="Supply Order No."><input value={form.supplyOrderNo || ''} onChange={e => set("supplyOrderNo", e.target.value)} className={inputCls} placeholder="e.g. PO-1024" /></Field>
+                  
+                  {showPurchaseDate && <Field label="Purchase Date"><input type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} className={inputCls} /></Field>}
+                  <Field label="Install Date"><input type="date" value={form.installDate || ''} onChange={e => set("installDate", e.target.value)} className={inputCls} /></Field>
+                  <div className="col-span-1 hidden sm:block"></div>
 
-              <Field label="Warranty / AMC Type"><input value={form.warrantyType || ''} onChange={e => set("warrantyType", e.target.value)} className={inputCls} placeholder="e.g. 3 Year Comprehensive" /></Field>
-              <Field label="Warranty Until"><input type="date" value={form.warrantyUntil} onChange={e => set("warrantyUntil", e.target.value)} className={inputCls} /></Field>
+                  <Field label="Warranty / AMC Type"><input value={form.warrantyType || ''} onChange={e => set("warrantyType", e.target.value)} className={inputCls} placeholder="e.g. 3 Year Comprehensive" /></Field>
+                  <Field label="Warranty Until"><input type="date" value={form.warrantyUntil} onChange={e => set("warrantyUntil", e.target.value)} className={inputCls} /></Field>
+                </>
+              )}
               
               <Field label="Remarks" className="col-span-full">
                 <textarea 
@@ -305,7 +317,7 @@ export function AssetFormDialog({
           {step === basicSpecsN && showSpecs && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
               <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Hardware Specifications</div>
-              {!(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD") && (
+              {!(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD" || form.type === "Mouse" || form.type === "Printer" || form.type === "Scanner") && (
                 <>
                   <Field label="Processor"><input value={form.specs?.Processor || ''} onChange={e => set("specs", { ...form.specs, Processor: e.target.value })} className={inputCls} placeholder="e.g. Intel Core i7" /></Field>
                   <Field label="Operating System"><input value={form.specs?.OS || ''} onChange={e => set("specs", { ...form.specs, OS: e.target.value })} className={inputCls} placeholder="e.g. Windows 11 Pro" /></Field>
@@ -314,12 +326,13 @@ export function AssetFormDialog({
                 </>
               )}
               
-              {(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD") && (
+              {(form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD" || form.type === "Mouse" || form.type === "Printer" || form.type === "Scanner") && (
                 <>
                   {(form.type === "UPS" || form.type === "Switch") && <Field label="Capacity"><input value={form.specs?.Capacity || ''} onChange={e => set("specs", { ...form.specs, Capacity: e.target.value })} className={inputCls} placeholder={form.type === "UPS" ? "e.g. 2KVA" : "e.g. 24-Port"} /></Field>}
                   {form.type === "HDD" && <Field label="Size"><input value={form.specs?.Capacity || ''} onChange={e => set("specs", { ...form.specs, Capacity: e.target.value })} className={inputCls} placeholder="e.g. 1TB" /></Field>}
-                  {form.type !== "HDD" && <Field label="Technology"><input value={form.specs?.Technology || ''} onChange={e => set("specs", { ...form.specs, Technology: e.target.value })} className={inputCls} placeholder={form.type === "UPS" ? "e.g. Line-Interactive" : form.type === "Monitor" ? "e.g. IPS LED" : "e.g. Managed Layer 3"} /></Field>}
+                  {form.type !== "HDD" && <Field label="Technology"><input value={form.specs?.Technology || ''} onChange={e => set("specs", { ...form.specs, Technology: e.target.value })} className={inputCls} placeholder={form.type === "UPS" ? "e.g. Line-Interactive" : form.type === "Monitor" ? "e.g. IPS LED" : form.type === "Mouse" ? "e.g. Optical / Wireless" : form.type === "Printer" ? "e.g. Laser / Inkjet" : form.type === "Scanner" ? "e.g. Flatbed / ADF" : "e.g. Managed Layer 3"} /></Field>}
                   {form.type === "Monitor" && <Field label="Data"><input value={form.specs?.Data || ''} onChange={e => set("specs", { ...form.specs, Data: e.target.value })} className={inputCls} placeholder="e.g. 24 inch 1080p" /></Field>}
+                  {form.type === "Printer" && <Field label="Toner / Cartridge"><input value={form.specs?.Toner || ''} onChange={e => set("specs", { ...form.specs, Toner: e.target.value })} className={inputCls} placeholder="e.g. TN-2365" /></Field>}
                 </>
               )}
             </div>
@@ -393,11 +406,15 @@ export function AssetFormDialog({
           {step === maxStep && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
               <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Network Information (Optional)</div>
-              <Field label="Hostname"><input value={form.network?.hostname || ''} onChange={e => set("network", { ...form.network, hostname: e.target.value })} className={inputCls} /></Field>
+              {showFullNetwork && <Field label="Hostname"><input value={form.network?.hostname || ''} onChange={e => set("network", { ...form.network, hostname: e.target.value })} className={inputCls} /></Field>}
               <Field label="IP Address"><input value={form.network?.ip || ''} onChange={e => set("network", { ...form.network, ip: e.target.value })} className={inputCls} /></Field>
-              <Field label="Ethernet MAC"><input value={form.network?.macEthernet || ''} onChange={e => set("network", { ...form.network, macEthernet: e.target.value })} className={inputCls} placeholder="00:00:00:00:00:00" /></Field>
-              <Field label="WiFi MAC"><input value={form.network?.macWifi || ''} onChange={e => set("network", { ...form.network, macWifi: e.target.value })} className={inputCls} placeholder="00:00:00:00:00:00" /></Field>
-              <Field label="VLAN"><input value={form.network?.vlan || ''} onChange={e => set("network", { ...form.network, vlan: e.target.value })} className={inputCls} /></Field>
+              {showFullNetwork && (
+                <>
+                  <Field label="Ethernet MAC"><input value={form.network?.macEthernet || ''} onChange={e => set("network", { ...form.network, macEthernet: e.target.value })} className={inputCls} placeholder="00:00:00:00:00:00" /></Field>
+                  <Field label="WiFi MAC"><input value={form.network?.macWifi || ''} onChange={e => set("network", { ...form.network, macWifi: e.target.value })} className={inputCls} placeholder="00:00:00:00:00:00" /></Field>
+                  <Field label="VLAN"><input value={form.network?.vlan || ''} onChange={e => set("network", { ...form.network, vlan: e.target.value })} className={inputCls} /></Field>
+                </>
+              )}
             </div>
           )}
 

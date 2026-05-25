@@ -7,6 +7,7 @@ import { fetchUsers, fetchAssets, assignAsset } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/assignments")({
   beforeLoad: () => {
+    if (typeof window === 'undefined') return;
     const role = localStorage.getItem("auth_role");
     if (role !== "admin") throw redirect({ to: "/dashboard" });
   },

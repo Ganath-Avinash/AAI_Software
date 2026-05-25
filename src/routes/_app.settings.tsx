@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const Route = createFileRoute("/_app/settings")({
   beforeLoad: () => {
+    if (typeof window === 'undefined') return;
     const role = localStorage.getItem("auth_role");
     if (role !== "admin") throw redirect({ to: "/dashboard" });
   },

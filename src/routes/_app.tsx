@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/app-layout";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: () => {
+    if (typeof window === 'undefined') return;
     try {
       const role = localStorage.getItem("auth_role");
       if (!role) {
