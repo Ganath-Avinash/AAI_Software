@@ -16,6 +16,7 @@ export const getAssets = async (req, res) => {
                 wt.warranty_type_name as warrantyType,
                 DATE_FORMAT(a.warranty_end_date, '%Y-%m-%d') as warrantyUntil,
                 a.remarks,
+                a.custom_fields as customFields,
                 ast.status_name as status,
                 l.location_name as location,
                 v.vendor_name as vendor,
@@ -56,6 +57,7 @@ export const getAssetById = async (req, res) => {
                 wt.warranty_type_name as warrantyType,
                 DATE_FORMAT(a.warranty_end_date, '%Y-%m-%d') as warrantyUntil,
                 a.remarks,
+                a.custom_fields as customFields,
                 ast.status_name as status,
                 l.location_name as location,
                 v.vendor_name as vendor,
@@ -164,6 +166,10 @@ export const getAssetById = async (req, res) => {
             asset.network = network[0];
             asset.network.online = true; // Mock online status for UI
         }
+        
+        if (asset.customFields && typeof asset.customFields === 'string') {
+            try { asset.customFields = JSON.parse(asset.customFields); } catch(e) {}
+        }
 
         res.json(asset);
     } catch (err) {
@@ -172,7 +178,7 @@ export const getAssetById = async (req, res) => {
 };
 
 export const createAsset = async (req, res) => {
-    const { type, make, model, serial, purchaseDate, installDate, supplyOrderNo, warrantyType, warrantyUntil, remarks, status, location, assignedTo, specs, network, vendor } = req.body;
+    const { type, make, model, serial, purchaseDate, installDate, supplyOrderNo, warrantyType, warrantyUntil, remarks, status, location, assignedTo, specs, network, vendor, customFields } = req.body;
     const id = req.body.id || crypto.randomUUID();
     const connection = await pool.getConnection();
     try {
@@ -243,10 +249,10 @@ export const createAsset = async (req, res) => {
         }
 
         await connection.query(`
-            INSERT INTO assets (asset_id, asset_type_id, model_id, vendor_id, serial_number, purchase_date, install_date, supply_order_no, warranty_type_id, warranty_end_date, remarks, status_id, location_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO assets (asset_id, asset_type_id, model_id, vendor_id, serial_number, purchase_date, install_date, supply_order_no, warranty_type_id, warranty_end_date, remarks, status_id, location_id, custom_fields)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
-            id, aty?.asset_type_id, modelId, vendorId, serial, purchaseDate || null, installDate || null, supplyOrderNo || null, warrantyTypeId, warrantyUntil || null, remarks || null, ast?.status_id, loc?.location_id
+            id, aty?.asset_type_id, modelId, vendorId, serial, purchaseDate || null, installDate || null, supplyOrderNo || null, warrantyTypeId, warrantyUntil || null, remarks || null, ast?.status_id, loc?.location_id, customFields ? JSON.stringify(customFields) : null
         ]);
         
         await connection.query(`
@@ -342,7 +348,7 @@ export const createAsset = async (req, res) => {
 
 export const updateAsset = async (req, res) => {
     const { id } = req.params;
-    const { type, make, model, serial, purchaseDate, installDate, supplyOrderNo, warrantyType, warrantyUntil, remarks, status, location, specs, network, vendor, assignedTo } = req.body;
+    const { type, make, model, serial, purchaseDate, installDate, supplyOrderNo, warrantyType, warrantyUntil, remarks, status, location, specs, network, vendor, assignedTo, customFields } = req.body;
     const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
@@ -395,9 +401,9 @@ export const updateAsset = async (req, res) => {
         await connection.query(`
             UPDATE assets SET 
                 asset_type_id = ?, model_id = ?, vendor_id = ?, serial_number = ?, 
-                purchase_date = ?, install_date = ?, supply_order_no = ?, warranty_type_id = ?, warranty_end_date = ?, remarks = ?, status_id = ?, location_id = ?
+                purchase_date = ?, install_date = ?, supply_order_no = ?, warranty_type_id = ?, warranty_end_date = ?, remarks = ?, status_id = ?, location_id = ?, custom_fields = ?
             WHERE asset_id = ?
-        `, [aty?.asset_type_id, modelId, vendorId, serial, purchaseDate || null, installDate || null, supplyOrderNo || null, warrantyTypeId, warrantyUntil || null, remarks || null, ast?.status_id, loc?.location_id, id]);
+        `, [aty?.asset_type_id, modelId, vendorId, serial, purchaseDate || null, installDate || null, supplyOrderNo || null, warrantyTypeId, warrantyUntil || null, remarks || null, ast?.status_id, loc?.location_id, customFields ? JSON.stringify(customFields) : null, id]);
 
         // Handle Assignment changes
         const [currentAssignments] = await connection.query(`

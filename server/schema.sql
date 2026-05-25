@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS warranty_types (
 
 CREATE TABLE IF NOT EXISTS asset_types (
     asset_type_id INT AUTO_INCREMENT PRIMARY KEY,
-    asset_type_name VARCHAR(50) NOT NULL UNIQUE
+    asset_type_name VARCHAR(50) NOT NULL UNIQUE,
+    custom_schema JSON DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS asset_status (
@@ -123,6 +124,7 @@ CREATE TABLE IF NOT EXISTS assets (
     status_id INT,
     location_id INT,
     remarks TEXT,
+    custom_fields JSON DEFAULT NULL,
     FOREIGN KEY (asset_type_id) REFERENCES asset_types(asset_type_id),
     FOREIGN KEY (model_id) REFERENCES device_models(model_id),
     FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id),

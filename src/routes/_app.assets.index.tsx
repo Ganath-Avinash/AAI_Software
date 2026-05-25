@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAssets, fetchUsers, fetchAssetTypes, createAsset } from "@/lib/api";
 import { Plus, Search, Grid3x3, List, Download } from "lucide-react";
 import { AssetFormDialog } from "@/components/asset-form-dialog";
+import { AssetTypeBuilderDialog } from "@/components/asset-type-builder-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { exportToCsv } from "@/lib/export";
 
@@ -22,6 +23,7 @@ function AssetsList() {
   const [status, setStatus] = useState("all");
   const [view, setView] = useState<"table" | "grid">("table");
   const [open, setOpen] = useState(false);
+  const [typeBuilderOpen, setTypeBuilderOpen] = useState(false);
 
   const { data: assets = [], isLoading: assetsLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
   const { data: users = [], isLoading: usersLoading } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
@@ -45,7 +47,7 @@ function AssetsList() {
     return matchQ && matchT && matchS;
   }), [q, type, status, assets]);
 
-  const types = serverTypes.length > 0 ? serverTypes : Array.from(new Set(assets.map((a: any) => a.type).filter(Boolean)));
+  const typeNames = serverTypes.length > 0 ? serverTypes.map((t: any) => t.name) : Array.from(new Set(assets.map((a: any) => a.type).filter(Boolean)));
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -60,7 +62,12 @@ function AssetsList() {
             <Download className="size-4" /> Export
           </button>
           {role === "admin" && (
-            <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+            <>
+              <button onClick={() => setTypeBuilderOpen(true)} className="h-9 px-3 rounded-md border bg-card text-sm font-medium hover:bg-accent flex items-center gap-2">
+                Manage Types
+              </button>
+              <button onClick={() => setOpen(true)} className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 flex items-center gap-2"><Plus className="size-4" /> Add asset</button>
+            </>
           )}
         </div>
       </div>
@@ -73,6 +80,10 @@ function AssetsList() {
         }}
         isSubmitting={createMutation.isPending}
       />
+      <AssetTypeBuilderDialog 
+        open={typeBuilderOpen} 
+        onOpenChange={setTypeBuilderOpen} 
+      />
 
 
       <div className="bg-card border rounded-lg">
@@ -84,7 +95,7 @@ function AssetsList() {
           </div>
           <select value={type} onChange={e => setType(e.target.value)} className="h-9 px-3 rounded-md border bg-background text-sm">
             <option value="all">All types</option>
-            {types.map((t: string) => <option key={t}>{t}</option>)}
+            {typeNames.map((t: string) => <option key={t}>{t}</option>)}
           </select>
           <select value={status} onChange={e => setStatus(e.target.value)} className="h-9 px-3 rounded-md border bg-background text-sm">
             <option value="all">All statuses</option>

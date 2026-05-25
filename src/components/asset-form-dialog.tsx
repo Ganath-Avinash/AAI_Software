@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
-import { fetchUsers, fetchLocations, fetchVendors } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchUsers, fetchLocations, fetchVendors, fetchAssetTypes, createAssetType, deleteAssetType } from "@/lib/api";
 import type { Asset } from "@/lib/mock-data";
-import { Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Plus, X, Trash2 } from "lucide-react";
 
 const typePrefixes: Record<string, string> = {
   "Laptop": "AAI-SR IT-LP-",
@@ -49,6 +49,7 @@ type FormData = {
   vendor?: string;
   specs?: any;
   network?: any;
+  customFields?: Record<string, string>;
 };
 
 const empty: FormData = {
@@ -69,6 +70,7 @@ const empty: FormData = {
   vendor: "",
   specs: {},
   network: {},
+  customFields: {},
 };
 
 const types: Asset["type"][] = ["Laptop","Desktop CPU","Monitor","Printer","Scanner","UPS","Webcam","HDD","Headset","Router","Switch","Keyboard","Mouse","Server","Workstation","Projector","TV","Tab","Plotter","Camera","AllINONE","IT ACCESS."];
@@ -90,10 +92,12 @@ export function AssetFormDialog({
 }) {
   const [form, setForm] = useState<FormData>(empty);
   const [step, setStep] = useState(1);
+  const queryClient = useQueryClient();
   
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: fetchLocations });
   const { data: vendors = [] } = useQuery({ queryKey: ['vendors'], queryFn: fetchVendors });
+  const { data: serverTypes = [] } = useQuery({ queryKey: ['asset-types'], queryFn: fetchAssetTypes });
 
   useEffect(() => {
     if (open) {
@@ -124,6 +128,7 @@ export function AssetFormDialog({
           vendor: (initial as any).vendor || "",
           specs: initial.specs || {},
           network: initial.network || {},
+          customFields: (initial as any).customFields || {},
         });
       } else {
         setForm(empty);
@@ -133,16 +138,19 @@ export function AssetFormDialog({
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
   
-  const showSpecs = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE" || form.type === "Workstation" || form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD" || form.type === "Mouse" || form.type === "Printer" || form.type === "Scanner";
-  const hasExtended = form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE";
+  const selectedCustomType = serverTypes.find((t: any) => t.name === form.type && t.schema);
+  const isCustom = !!selectedCustomType;
+
+  const showSpecs = !isCustom && (form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE" || form.type === "Workstation" || form.type === "UPS" || form.type === "Switch" || form.type === "Monitor" || form.type === "HDD" || form.type === "Mouse" || form.type === "Printer" || form.type === "Scanner");
+  const hasExtended = !isCustom && (form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE");
   
   const showStatus = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
   const showPurchaseDate = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
   const showLocation = !["Tab", "Keyboard", "Mouse", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
   const showAssignedTo = !["Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
-  const showPurchaseStep = form.type !== "Tab" && form.type !== "IT ACCESS.";
-  const showPurchaseDetails = !["Camera"].includes(form.type);
-  const showNetwork = !["Keyboard", "Mouse", "HDD", "Headset", "Webcam", "Printer", "Scanner", "IT ACCESS."].includes(form.type);
+  const showPurchaseStep = !isCustom && (form.type !== "Tab" && form.type !== "IT ACCESS.");
+  const showPurchaseDetails = !isCustom && (!["Camera"].includes(form.type));
+  const showNetwork = !isCustom && (!["Keyboard", "Mouse", "HDD", "Headset", "Webcam", "Printer", "Scanner", "IT ACCESS."].includes(form.type));
   
   let currentStep = 2;
   const stepsList = [
@@ -159,8 +167,11 @@ export function AssetFormDialog({
   const extendedSpecsN = hasExtended ? ++currentStep : -1;
   if (hasExtended) stepsList.push({ n: extendedSpecsN, label: "Ext. HW" });
   
-  const softwarePeriphN = (form.type === "Desktop CPU" || form.type === "AllINONE") ? ++currentStep : -1;
+  const softwarePeriphN = !isCustom && (form.type === "Desktop CPU" || form.type === "AllINONE") ? ++currentStep : -1;
   if (softwarePeriphN !== -1) stepsList.push({ n: softwarePeriphN, label: "Software & Periph" });
+  
+  const customSpecsN = isCustom ? ++currentStep : -1;
+  if (isCustom) stepsList.push({ n: customSpecsN, label: "Custom Details" });
   
   const networkN = showNetwork ? ++currentStep : -1;
   if (showNetwork) stepsList.push({ n: networkN, label: "Network" });
@@ -225,6 +236,18 @@ export function AssetFormDialog({
                 >
                   <div className="font-medium text-sm text-foreground">{t}</div>
                 </button>
+              ))}
+              {serverTypes.filter((t: any) => t.schema && !types.includes(t.name)).map((t: any) => (
+                <div key={t.id} className="relative group">
+                  <button
+                    type="button"
+                    disabled={!!initial}
+                    onClick={() => set("type", t.name as Asset["type"])}
+                    className={`w-full h-full p-4 border rounded-lg text-left flex flex-col gap-2 transition-all ${form.type === t.name ? 'border-primary bg-primary/5 shadow-sm' : 'hover:border-primary/50'} ${initial ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="font-medium text-sm text-foreground flex items-center gap-2">{t.name} <span className="text-[10px] bg-primary/10 text-primary px-1 rounded uppercase">Custom</span></div>
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -400,6 +423,22 @@ export function AssetFormDialog({
               <Field label="Serial Number"><input value={form.specs?.MouseSerial || ''} onChange={e => set("specs", { ...form.specs, MouseSerial: e.target.value })} className={inputCls} /></Field>
               <Field label="Make"><input value={form.specs?.MouseMake || ''} onChange={e => set("specs", { ...form.specs, MouseMake: e.target.value })} className={inputCls} placeholder="e.g. Logitech" /></Field>
               <Field label="Model"><input value={form.specs?.MouseModel || ''} onChange={e => set("specs", { ...form.specs, MouseModel: e.target.value })} className={inputCls} placeholder="e.g. M100" /></Field>
+            </div>
+          )}
+
+          {step === customSpecsN && isCustom && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[300px] content-start p-2">
+              <div className="col-span-full text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Custom Specifications</div>
+              {selectedCustomType.schema.map((field: any, i: number) => (
+                <Field key={i} label={field.name}>
+                  <input 
+                    type={field.type} 
+                    value={form.customFields?.[field.name] || ''} 
+                    onChange={e => setForm(f => ({ ...f, customFields: { ...(f.customFields || {}), [field.name]: e.target.value } }))} 
+                    className={inputCls} 
+                  />
+                </Field>
+              ))}
             </div>
           )}
 

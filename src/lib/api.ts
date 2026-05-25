@@ -106,8 +106,21 @@ export async function fetchLocations() {
 export async function fetchAssetTypes() {
     const res = await fetch(`${API_BASE}/masters/asset-types`);
     if (!res.ok) return [];
-    const data = await res.json();
-    return data.map((d: any) => d.asset_type_name);
+    return res.json();
+}
+
+export async function createAssetType(data: { name: string, schema: any }) {
+    return handleResponse(await fetch(`${API_BASE}/masters/asset-types`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }), 'Failed to create asset type');
+}
+
+export async function deleteAssetType(id: number | string) {
+    return handleResponse(await fetch(`${API_BASE}/masters/asset-types/${id}`, {
+        method: 'DELETE',
+    }), 'Failed to delete asset type');
 }
 
 // Vendor Endpoints

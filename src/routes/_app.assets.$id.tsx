@@ -153,7 +153,14 @@ function AssetDetail() {
                       <div className="text-sm font-medium mt-0.5">{v}</div>
                     </div>
                   ))}
-                  {!asset.specs && <Empty text="No detailed specs available." />}
+                  {asset.customFields && Object.entries(asset.customFields as Record<string,string>)
+                    .map(([k, v]) => (
+                    <div key={k} className="p-3 rounded-md bg-muted/40 border-l-2 border-primary">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1"><span>{k}</span> <span className="text-[10px] bg-primary/10 text-primary px-1 rounded">Custom</span></div>
+                      <div className="text-sm font-medium mt-0.5">{v}</div>
+                    </div>
+                  ))}
+                  {!asset.specs && !asset.customFields && <Empty text="No detailed specs available." />}
                 </div>
 
                 {asset.specs && (asset.specs.KeyboardID || asset.specs.KeyboardMake || asset.specs.KeyboardSerial || asset.specs.KeyboardModel) && (
