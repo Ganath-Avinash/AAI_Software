@@ -6,8 +6,8 @@ import { Mail, MapPin, Phone, Building2, BadgeCheck, Edit, ArrowRightLeft, HardD
 import { useState, useEffect, useReducer } from "react";
 import { UserFormDialog } from "@/components/user-form-dialog";
 import { useAuth } from "@/lib/auth-context";
-import { useQuery } from "@tanstack/react-query";
-import { fetchUser, fetchAssets } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchUser, fetchAssets, updateUser } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/users/$id")({
   component: UserDetail,
@@ -17,12 +17,22 @@ export const Route = createFileRoute("/_app/users/$id")({
 function UserDetail() {
   const { role } = useAuth();
   const params = Route.useParams();
+  const queryClient = useQueryClient();
   const [, force] = useReducer((x: number) => x + 1, 0);
   const [editOpen, setEditOpen] = useState(false);
   useEffect(() => { const off = subscribe(force); return () => { off(); }; }, []);
   
   const { data: user, isLoading: userLoading } = useQuery({ queryKey: ['user', params.id], queryFn: () => fetchUser(params.id) });
   const { data: allAssets = [] } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => updateUser(params.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', params.id] });
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      setEditOpen(false);
+    }
+  });
 
   if (userLoading) return <div className="p-8">Loading user details...</div>;
   if (!user || user.error) return <div className="p-8">User not found.</div>;
@@ -38,7 +48,7 @@ function UserDetail() {
         onOpenChange={setEditOpen}
         title="Edit User"
         initial={user}
-        onSubmit={(data) => { console.log('Update not yet implemented', data); setEditOpen(false); }}
+        onSubmit={(data) => updateMutation.mutate(data)}
       />
 
 

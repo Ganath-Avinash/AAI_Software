@@ -65,6 +65,14 @@ export async function createUser(data: any) {
     }), 'Failed to create user');
 }
 
+export async function updateUser(id: string, data: any) {
+    return handleResponse(await fetchWithAuth(`${API_BASE}/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }), 'Failed to update user');
+}
+
 export async function fetchHistory() {
     return handleResponse(await fetchWithAuth(`${API_BASE}/assignments/history`), 'Failed to fetch history');
 }
