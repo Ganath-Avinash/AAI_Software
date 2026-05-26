@@ -59,12 +59,14 @@ function ReportsPage() {
         <div className="bg-card border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <h3 className="text-lg font-semibold tracking-tight">Asset status overview</h3>
           <p className="text-sm text-muted-foreground mb-6">Current lifecycle distribution</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-10 flex-1 pb-4">
-            <div className="relative size-48 md:size-52 drop-shadow-md">
+          
+          <div className="flex flex-col items-center justify-center gap-6 flex-1 pb-4 mt-2">
+            {/* The Donut Chart */}
+            <div className="relative size-44 md:size-48">
               <svg viewBox="0 0 100 100" className="size-full -rotate-90">
                 {(() => {
                   if (totalS === 0) {
-                    return <circle r="15.91549" cx="50" cy="50" fill="transparent" stroke="var(--color-muted)" strokeWidth="14" />;
+                    return <circle r="15.91549" cx="50" cy="50" fill="transparent" stroke="var(--color-muted)" strokeWidth="18" />;
                   }
                   let offset = 0;
                   const segs = [
@@ -76,20 +78,56 @@ function ReportsPage() {
                     if (s.val === 0) return null;
                     const pct = (s.val / totalS) * 100;
                     const dash = `${pct} ${100 - pct}`;
-                    const node = <circle key={i} r="15.91549" cx="50" cy="50" fill="transparent" stroke={s.color} strokeWidth="14" strokeDasharray={dash} strokeDashoffset={-offset} className="transition-all duration-500 ease-out hover:stroke-[16px]" />;
+                    const node = (
+                      <circle
+                        key={i}
+                        r="15.91549"
+                        cx="50"
+                        cy="50"
+                        fill="transparent"
+                        stroke={s.color}
+                        strokeWidth="18"
+                        strokeDasharray={dash}
+                        strokeDashoffset={-offset}
+                        className="transition-all duration-300 ease-in-out hover:opacity-85 cursor-pointer"
+                      />
+                    );
                     offset += pct;
                     return node;
                   });
                 })()}
               </svg>
-              <div className="absolute inset-0 grid place-items-center">
-                <div className="text-center"><div className="text-4xl font-bold tracking-tighter">{totalS}</div><div className="text-sm text-muted-foreground uppercase font-medium tracking-wider mt-1">Total</div></div>
-              </div>
             </div>
-            <div className="space-y-4 text-sm bg-secondary/30 p-4 rounded-xl border border-border/50">
-              <Legend color="var(--color-info)" label="Assigned" value={statusCounts.Assigned} />
-              <Legend color="var(--color-success)" label="Available" value={statusCounts.Available} />
-              <Legend color="var(--color-warning)" label="Maintenance" value={statusCounts.Maintenance} />
+            
+            {/* Legend grid listed below */}
+            <div className="w-full max-w-sm space-y-3">
+              {/* Total Row Card */}
+              <div className="flex justify-between items-center px-4 py-2.5 bg-secondary/30 rounded-lg border font-medium">
+                <span className="text-muted-foreground text-sm flex items-center gap-2">
+                  <span className="size-2.5 rounded-full bg-foreground/40" />
+                  Total Inventory
+                </span>
+                <span className="text-lg font-bold tabular-nums text-foreground">{totalS}</span>
+              </div>
+              
+              {/* Status breakdown grid */}
+              <div className="grid grid-cols-3 gap-2.5 text-center">
+                <div className="bg-card border rounded-lg p-3 flex flex-col items-center justify-between shadow-sm">
+                  <span className="size-2.5 rounded-full mb-1.5" style={{ backgroundColor: "var(--color-info)" }} />
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Assigned</span>
+                  <span className="text-base font-bold tabular-nums mt-1 text-foreground">{statusCounts.Assigned}</span>
+                </div>
+                <div className="bg-card border rounded-lg p-3 flex flex-col items-center justify-between shadow-sm">
+                  <span className="size-2.5 rounded-full mb-1.5" style={{ backgroundColor: "var(--color-success)" }} />
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Available</span>
+                  <span className="text-base font-bold tabular-nums mt-1 text-foreground">{statusCounts.Available}</span>
+                </div>
+                <div className="bg-card border rounded-lg p-3 flex flex-col items-center justify-between shadow-sm">
+                  <span className="size-2.5 rounded-full mb-1.5" style={{ backgroundColor: "var(--color-warning)" }} />
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Maintenance</span>
+                  <span className="text-base font-bold tabular-nums mt-1 text-foreground">{statusCounts.Maintenance}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

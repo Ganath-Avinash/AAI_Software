@@ -1,14 +1,13 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, HardDrive, Network, AppWindow,
-  ArrowRightLeft, Undo2, BarChart3, Settings, Plane, LogOut, Info, Key, Store
+  ArrowRightLeft, Undo2, BarChart3, Settings, LogOut, Info, Store
 } from "lucide-react";
 import { GlobalSearch } from "@/components/global-search";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
-import { useState } from "react";
+import logoImg from "../img/logo_15042021.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,7 +26,6 @@ const navItems = [
 export function AppLayout() {
   const pathname = useRouterState({ select: s => s.location.pathname });
   const { role, logout } = useAuth();
-  const [passOpen, setPassOpen] = useState(false);
 
   const filteredNavItems = navItems.filter(item => {
     if (role === "regular" && ["/assignments", "/withdrawals", "/settings"].includes(item.to)) {
@@ -41,11 +39,11 @@ export function AppLayout() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
         <div className="h-16 px-5 flex items-center gap-2.5 border-b border-sidebar-border">
-          <div className="size-9 rounded-md bg-sidebar-accent grid place-items-center">
-            <Plane className="size-5 text-sidebar-accent-foreground" />
+          <div className="size-9 rounded-md bg-white flex items-center justify-center p-1 shadow-sm">
+            <img src={logoImg} alt="AAI Logo" className="max-h-full max-w-full object-contain translate-x-[1.5px] -translate-y-[0.5px]" />
           </div>
           <div>
-            <div className="text-sm font-bold leading-tight text-white">AAI ITAM</div>
+            <div className="text-sm font-bold leading-tight text-white">AAI</div>
             <div className="text-[10px] text-sidebar-foreground/70 uppercase tracking-wider">Asset Management</div>
           </div>
         </div>
@@ -69,9 +67,6 @@ export function AppLayout() {
         </nav>
 
         <div className="p-3 border-t border-sidebar-border space-y-1">
-          <button onClick={() => setPassOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50 text-left">
-            <Key className="size-4" /> Change password
-          </button>
           <Link to="/" onClick={logout} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/50">
             <LogOut className="size-4" /> Sign out
           </Link>
@@ -100,8 +95,6 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
-
-      <ChangePasswordDialog open={passOpen} onOpenChange={setPassOpen} />
     </div>
   );
 }

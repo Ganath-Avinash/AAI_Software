@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -9,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import logoImg from "../img/logo_15042021.png";
 import { AuthProvider } from "@/lib/auth-context";
 
 function NotFoundComponent() {
@@ -87,6 +89,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: logoImg,
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -111,6 +118,42 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    const applyTheme = () => {
+      const theme = localStorage.getItem("app-theme") || "system";
+      const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    };
+    applyTheme();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "app-theme") applyTheme();
+    };
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleMedia = () => {
+      if (localStorage.getItem("app-theme") === "system" || !localStorage.getItem("app-theme")) {
+        applyTheme();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    mediaQuery.addEventListener("change", handleMedia);
+    
+    // Custom event listener for same-tab updates
+    window.addEventListener("app-theme-changed", applyTheme);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      mediaQuery.removeEventListener("change", handleMedia);
+      window.removeEventListener("app-theme-changed", applyTheme);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
