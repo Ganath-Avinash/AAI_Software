@@ -67,5 +67,5 @@ INSERT IGNORE INTO vendors (vendor_name) VALUES
 
 -- App Users (Authentication)
 INSERT IGNORE INTO app_users (username, password_hash, role) VALUES 
-('admin', '$2b$10$n9exzPQP0mgCD0V.AbgCaeM8VDTX6NSkq3GOpdszgpCyv2Ce..8Mq', 'admin'),
-('regular', '$2b$10$2yO5TbpDvUhghGQB7qz7QepQtCuTSZoV/S4i5hLANgN5VZWxOH52q', 'regular');
+('admin', '$2b$10$5zs1VhvRl4LQl3JBBTSp.u1y6AQMuRow8Ijbvg5xyYSc2kcmadECa', 'admin'),
+('regular', '$2b$10$lwvXfs2i.PAVuR1EVK8mc.C7rlRqGx.IXK110PB.4JfBFVw/.ovum', 'regular');
