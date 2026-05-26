@@ -64,3 +64,8 @@ INSERT IGNORE INTO warranty_types (warranty_type_name) VALUES
 -- Vendors
 INSERT IGNORE INTO vendors (vendor_name) VALUES 
 ('TechCorp IT Supplies'), ('Global Solutions India'), ('Direct OEM'), ('Local Retailer');
+
+-- App Users (Authentication)
+INSERT IGNORE INTO app_users (username, password_hash, role) VALUES 
+('admin', '$2b$10$n9exzPQP0mgCD0V.AbgCaeM8VDTX6NSkq3GOpdszgpCyv2Ce..8Mq', 'admin'),
+('regular', '$2b$10$2yO5TbpDvUhghGQB7qz7QepQtCuTSZoV/S4i5hLANgN5VZWxOH52q', 'regular');

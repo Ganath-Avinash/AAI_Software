@@ -16,6 +16,7 @@ import userRoutes from './routes/users.js';
 import assignmentRoutes from './routes/assignments.js';
 import vendorRoutes from './routes/vendors.js';
 import withdrawalRoutes from './routes/withdrawals.js';
+import authRoutes from './routes/auth.js';
 
 app.use('/api/masters', masterRoutes);
 app.use('/api/dashboard', dashboardRoutes);
@@ -24,6 +25,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

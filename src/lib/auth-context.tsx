@@ -4,66 +4,65 @@ export type Role = "admin" | "regular" | null;
 
 interface AuthContextType {
   role: Role;
-  login: (username: string, pass: string) => boolean;
+  login: (username: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  changePassword: (oldPass: string, newPass: string) => boolean;
+  changePassword: (oldPass: string, newPass: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const DEFAULT_PASSWORDS = {
-  admin: "admin",
-  regular: "regular"
-};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(() => {
     try {
       const stored = localStorage.getItem("auth_role");
-      if (stored === "admin" || stored === "regular") return stored;
+      if (stored === "admin" || stored === "regular") return stored as Role;
     } catch {}
     return null;
   });
 
-  const [passwords, setPasswords] = useState<Record<string, string>>(() => {
+  const login = async (username: string, pass: string) => {
     try {
-      const stored = localStorage.getItem("auth_passwords");
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    return DEFAULT_PASSWORDS;
-  });
-
-  useEffect(() => {
-    try { localStorage.setItem("auth_passwords", JSON.stringify(passwords)); } catch {}
-  }, [passwords]);
-
-  const login = (username: string, pass: string) => {
-    const r = username.toLowerCase();
-    const storedPass = passwords[r];
-    const defaultPass = r === "admin" ? "admin" : "regular";
-    
-    if ((r === "admin" || r === "regular") && (storedPass === pass || defaultPass === pass)) {
-      setRole(r as Role);
-      try { localStorage.setItem("auth_role", r); } catch {}
-      return true;
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password: pass })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const r = data.role as Role;
+        setRole(r);
+        localStorage.setItem("auth_role", r as string);
+        localStorage.setItem("auth_token", data.token);
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
     }
     return false;
   };
 
   const logout = () => {
     setRole(null);
-    try { localStorage.removeItem("auth_role"); } catch {}
+    localStorage.removeItem("auth_role");
+    localStorage.removeItem("auth_token");
   };
 
-  const changePassword = (oldPass: string, newPass: string) => {
-    if (!role) return false;
-    if (passwords[role] !== oldPass) return false;
-    
-    setPasswords(prev => ({
-      ...prev,
-      [role]: newPass
-    }));
-    return true;
+  const changePassword = async (oldPass: string, newPass: string) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("http://localhost:5000/api/auth/change-password", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass })
+      });
+      return res.ok;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   };
 
   return <AuthContext.Provider value={{ role, login, logout, changePassword }}>{children}</AuthContext.Provider>;

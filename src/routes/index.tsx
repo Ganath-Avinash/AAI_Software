@@ -15,10 +15,10 @@ function LoginPage() {
   const [p, setP] = useState("");
   const [error, setError] = useState("");
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const success = login(u, p);
+    const success = await login(u, p);
     if (success) {
       navigate({ to: "/dashboard" });
     } else {

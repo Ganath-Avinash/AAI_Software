@@ -271,6 +271,18 @@ CREATE TABLE IF NOT EXISTS equipment_specs (
     data_field VARCHAR(100),
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE
 );
+
+-- =========================================================
+-- APP USERS (Authentication)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS app_users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'regular',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 C R E A T E   T A B L E   I F   N O T   E X I S T S   w i t h d r a w n _ r e p o r t s   ( 
          r e p o r t _ i d   I N T   A U T O _ I N C R E M E N T   P R I M A R Y   K E Y , 
          s l _ n o   I N T , 
