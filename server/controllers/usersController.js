@@ -14,7 +14,17 @@ export const getUsers = async (req, res) => {
                 l.location_name as location,
                 u.intercom,
                 et.employee_type_name as employeeType,
-                u.status
+                u.status,
+                (
+                    SELECT JSON_ARRAYAGG(uaa.asset_id) 
+                    FROM user_asset_assignment uaa 
+                    WHERE uaa.user_id = u.user_id AND uaa.returned_date IS NULL
+                ) as assetIdsStr,
+                (
+                    SELECT JSON_ARRAYAGG(uaa.asset_id) 
+                    FROM user_asset_assignment uaa 
+                    WHERE uaa.user_id = u.user_id AND uaa.returned_date IS NOT NULL
+                ) as pastAssetIdsStr
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
             LEFT JOIN designations des ON u.designation_id = des.designation_id
@@ -23,26 +33,24 @@ export const getUsers = async (req, res) => {
         `;
         const [rows] = await pool.query(query);
         
-        // Fetch assigned assets for each user
-        for (let user of rows) {
-            const [assetRows] = await pool.query(`
-                SELECT a.asset_id 
-                FROM user_asset_assignment uaa
-                JOIN assets a ON uaa.asset_id = a.asset_id
-                WHERE uaa.user_id = ? AND uaa.returned_date IS NULL
-            `, [user.id]);
-            user.assetIds = assetRows.map(a => a.asset_id);
-
-            const [pastAssetRows] = await pool.query(`
-                SELECT a.asset_id 
-                FROM user_asset_assignment uaa
-                JOIN assets a ON uaa.asset_id = a.asset_id
-                WHERE uaa.user_id = ? AND uaa.returned_date IS NOT NULL
-            `, [user.id]);
-            user.pastAssetIds = pastAssetRows.map(a => a.asset_id);
-        }
+        const formattedRows = rows.map(user => {
+            let assetIds = [];
+            let pastAssetIds = [];
+            if (user.assetIdsStr) {
+                assetIds = typeof user.assetIdsStr === 'string' ? JSON.parse(user.assetIdsStr) : user.assetIdsStr;
+            }
+            if (user.pastAssetIdsStr) {
+                pastAssetIds = typeof user.pastAssetIdsStr === 'string' ? JSON.parse(user.pastAssetIdsStr) : user.pastAssetIdsStr;
+            }
+            
+            delete user.assetIdsStr;
+            delete user.pastAssetIdsStr;
+            user.assetIds = assetIds || [];
+            user.pastAssetIds = pastAssetIds || [];
+            return user;
+        });
         
-        res.json(rows);
+        res.json(formattedRows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -50,7 +58,6 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     try {
-        // Similar to getUsers but with WHERE u.user_id = ?
         const query = `
             SELECT 
                 u.user_id as id,
@@ -62,7 +69,17 @@ export const getUserById = async (req, res) => {
                 l.location_name as location,
                 u.intercom,
                 et.employee_type_name as employeeType,
-                u.status
+                u.status,
+                (
+                    SELECT JSON_ARRAYAGG(uaa.asset_id) 
+                    FROM user_asset_assignment uaa 
+                    WHERE uaa.user_id = u.user_id AND uaa.returned_date IS NULL
+                ) as assetIdsStr,
+                (
+                    SELECT JSON_ARRAYAGG(uaa.asset_id) 
+                    FROM user_asset_assignment uaa 
+                    WHERE uaa.user_id = u.user_id AND uaa.returned_date IS NOT NULL
+                ) as pastAssetIdsStr
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
             LEFT JOIN designations des ON u.designation_id = des.designation_id
@@ -75,21 +92,19 @@ export const getUserById = async (req, res) => {
         
         const user = rows[0];
         
-        const [assetRows] = await pool.query(`
-            SELECT a.asset_id 
-            FROM user_asset_assignment uaa
-            JOIN assets a ON uaa.asset_id = a.asset_id
-            WHERE uaa.user_id = ? AND uaa.returned_date IS NULL
-        `, [user.id]);
-        user.assetIds = assetRows.map(a => a.asset_id);
+        let assetIds = [];
+        let pastAssetIds = [];
+        if (user.assetIdsStr) {
+            assetIds = typeof user.assetIdsStr === 'string' ? JSON.parse(user.assetIdsStr) : user.assetIdsStr;
+        }
+        if (user.pastAssetIdsStr) {
+            pastAssetIds = typeof user.pastAssetIdsStr === 'string' ? JSON.parse(user.pastAssetIdsStr) : user.pastAssetIdsStr;
+        }
         
-        const [pastAssetRows] = await pool.query(`
-            SELECT a.asset_id 
-            FROM user_asset_assignment uaa
-            JOIN assets a ON uaa.asset_id = a.asset_id
-            WHERE uaa.user_id = ? AND uaa.returned_date IS NOT NULL
-        `, [user.id]);
-        user.pastAssetIds = pastAssetRows.map(a => a.asset_id);
+        delete user.assetIdsStr;
+        delete user.pastAssetIdsStr;
+        user.assetIds = assetIds || [];
+        user.pastAssetIds = pastAssetIds || [];
         
         res.json(user);
     } catch (err) {
