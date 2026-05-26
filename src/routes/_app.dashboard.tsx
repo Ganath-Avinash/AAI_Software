@@ -76,7 +76,7 @@ function Dashboard() {
               <h2 className="font-semibold">Recent Assignments</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Latest hardware allocations across departments</p>
             </div>
-            <Link to="/assignments" className="text-xs text-primary hover:underline">View all →</Link>
+            <Link to="/assets" className="text-xs text-primary hover:underline">View all →</Link>
           </div>
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { assets } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAssets } from "@/lib/api";
 import { AppWindow, Download } from "lucide-react";
 import { exportToCsv } from "@/lib/export";
 
@@ -9,6 +10,8 @@ export const Route = createFileRoute("/_app/software")({
 });
 
 function SoftwarePage() {
+  const { data: assets = [], isLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+
   const agg = new Map<string, { name: string; version: string; count: number; sample: { assetId: string; key: string; expires: string } }>();
   for (const a of assets) {
     for (const s of a.software ?? []) {
@@ -19,6 +22,10 @@ function SoftwarePage() {
     }
   }
   const items = Array.from(agg.values());
+
+  if (isLoading) {
+    return <div className="p-6">Loading software data...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">

@@ -16,6 +16,10 @@ dist-ssr
 .nitro
 *.local
 
+# Secrets and Backups (CRITICAL TO HIDE)
+.env
+*.sql
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

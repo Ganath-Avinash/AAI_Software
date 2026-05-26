@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { StatusBadge } from "@/components/status-badge";
-import { assets } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAssets } from "@/lib/api";
 import { Network as NetIcon, Download } from "lucide-react";
 import { exportToCsv } from "@/lib/export";
 
@@ -10,7 +11,14 @@ export const Route = createFileRoute("/_app/network")({
 });
 
 function NetworkPage() {
-  const netAssets = assets.filter(a => a.network);
+  const { data: assets = [], isLoading } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+
+  const netAssets = assets.filter((a: any) => a.network);
+
+  if (isLoading) {
+    return <div className="p-6">Loading network data...</div>;
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <Breadcrumbs items={[{ label: "Network" }]} />

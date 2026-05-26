@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
+import { Eye, EyeOff } from "lucide-react";
 
 export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (o: boolean) => void }) {
   const { changePassword } = useAuth();
@@ -9,6 +10,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean, on
   const [confirmPass, setConfirmPass] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +46,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean, on
   return (
     <Dialog open={open} onOpenChange={(val) => {
       onOpenChange(val);
-      if (!val) { setError(""); setSuccess(false); setOldPass(""); setNewPass(""); setConfirmPass(""); }
+      if (!val) { setError(""); setSuccess(false); setOldPass(""); setNewPass(""); setConfirmPass(""); setShowOldPass(false); setShowNewPass(false); setShowConfirmPass(false); }
     }}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
@@ -54,15 +58,30 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean, on
           
           <div className="space-y-1">
             <label className="text-xs font-medium">Current Password</label>
-            <input type="password" value={oldPass} onChange={e => setOldPass(e.target.value)} required className="w-full h-9 px-3 rounded-md border text-sm outline-none focus:border-primary" />
+            <div className="relative">
+              <input type={showOldPass ? "text" : "password"} value={oldPass} onChange={e => setOldPass(e.target.value)} required autoComplete="current-password" className="w-full h-9 px-3 pr-10 rounded-md border text-sm outline-none focus:border-primary" />
+              <button type="button" onClick={() => setShowOldPass(!showOldPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showOldPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">New Password</label>
-            <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} required className="w-full h-9 px-3 rounded-md border text-sm outline-none focus:border-primary" />
+            <div className="relative">
+              <input type={showNewPass ? "text" : "password"} value={newPass} onChange={e => setNewPass(e.target.value)} required autoComplete="new-password" className="w-full h-9 px-3 pr-10 rounded-md border text-sm outline-none focus:border-primary" />
+              <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showNewPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">Confirm New Password</label>
-            <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} required className="w-full h-9 px-3 rounded-md border text-sm outline-none focus:border-primary" />
+            <div className="relative">
+              <input type={showConfirmPass ? "text" : "password"} value={confirmPass} onChange={e => setConfirmPass(e.target.value)} required autoComplete="new-password" className="w-full h-9 px-3 pr-10 rounded-md border text-sm outline-none focus:border-primary" />
+              <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                {showConfirmPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="pt-2 flex justify-end gap-2">

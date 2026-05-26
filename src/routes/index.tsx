@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Plane, Shield, Lock } from "lucide-react";
+import { Plane, Shield, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
 import { useAuth } from "@/lib/auth-context";
@@ -14,6 +14,7 @@ function LoginPage() {
   const [u, setU] = useState("");
   const [p, setP] = useState("");
   const [error, setError] = useState("");
+  const [showP, setShowP] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +87,13 @@ function LoginPage() {
                 <label className="text-xs font-medium">Password</label>
                 <a className="text-xs text-primary hover:underline cursor-pointer">Forgot?</a>
               </div>
-              <input type="password" value={p} onChange={e => setP(e.target.value)}
-                className="mt-1.5 w-full h-10 px-3 rounded-md border bg-background focus:border-ring outline-none text-sm" />
+              <div className="relative mt-1.5">
+                <input type={showP ? "text" : "password"} value={p} onChange={e => setP(e.target.value)} autoComplete="current-password"
+                  className="w-full h-10 px-3 pr-10 rounded-md border bg-background focus:border-ring outline-none text-sm" />
+                <button type="button" onClick={() => setShowP(!showP)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showP ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <input type="checkbox" defaultChecked className="rounded" /> Keep me signed in on this device

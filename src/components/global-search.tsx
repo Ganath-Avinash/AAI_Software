@@ -1,9 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, User as UserIcon, HardDrive, Network as NetIcon } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { users, assets } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUsers, fetchAssets } from "@/lib/api";
 
 export function GlobalSearch() {
+  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: assets = [] } = useQuery({ queryKey: ['assets'], queryFn: fetchAssets });
+  
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();

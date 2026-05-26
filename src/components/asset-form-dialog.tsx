@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchUsers, fetchLocations, fetchVendors, fetchAssetTypes, createAssetType, deleteAssetType } from "@/lib/api";
 import type { Asset } from "@/lib/mock-data";
-import { Check, ArrowRight, ArrowLeft, Plus, X, Trash2 } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Plus, X, Trash2, ChevronsUpDown } from "lucide-react";
 
 const typePrefixes: Record<string, string> = {
   "Laptop": "AAI-SR IT-LP-",
@@ -92,6 +94,7 @@ export function AssetFormDialog({
 }) {
   const [form, setForm] = useState<FormData>(empty);
   const [step, setStep] = useState(1);
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
   const queryClient = useQueryClient();
   
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
@@ -145,11 +148,11 @@ export function AssetFormDialog({
   const hasExtended = !isCustom && (form.type === "Laptop" || form.type === "Desktop CPU" || form.type === "AllINONE");
   
   const showStatus = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
-  const showPurchaseDate = !["TV", "Server", "Tab", "Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
+  const showPurchaseDate = true; // allow purchase date for any asset
   const showLocation = !["Tab", "Keyboard", "Mouse", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
-  const showAssignedTo = !["Keyboard", "Mouse", "Camera", "Printer", "Scanner", "IT ACCESS.", "HDD"].includes(form.type);
-  const showPurchaseStep = !isCustom && (form.type !== "Tab" && form.type !== "IT ACCESS.");
-  const showPurchaseDetails = !isCustom && (!["Camera"].includes(form.type));
+  const showAssignedTo = true; // allow assigning any asset
+  const showPurchaseStep = true; // all assets have vendors and purchase details
+  const showPurchaseDetails = true;
   const showNetwork = !isCustom && (!["Keyboard", "Mouse", "HDD", "Headset", "Webcam", "Printer", "Scanner", "IT ACCESS."].includes(form.type));
   
   let currentStep = 2;
@@ -289,10 +292,57 @@ export function AssetFormDialog({
               )}
               {showAssignedTo && (
                 <Field label="Assigned To" className={(!showLocation || !showStatus) ? "col-span-1" : "col-span-2"}>
-                  <select value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} className={inputCls}>
-                    <option value="">— Unassigned —</option>
-                    {users.map((u: any) => <option key={u.id} value={u.id}>{u.name} ({u.empId})</option>)}
-                  </select>
+                  <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between h-9 px-3 rounded-md border bg-background text-sm outline-none focus:border-ring ${!form.assignedTo ? "text-muted-foreground" : ""}`}
+                      >
+                        <span className="truncate">
+                          {form.assignedTo
+                            ? (() => {
+                                const u = users.find((u: any) => u.id === form.assignedTo);
+                                return u ? `${u.name} (${u.empId})` : "Unknown User";
+                              })()
+                            : "— Unassigned —"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search user by name or ID..." />
+                        <CommandList className="max-h-[200px] overflow-y-auto">
+                          <CommandEmpty>No user found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="unassigned"
+                              onSelect={() => {
+                                set("assignedTo", "");
+                                setUserSearchOpen(false);
+                              }}
+                            >
+                              <Check className={`mr-2 size-4 ${form.assignedTo === "" ? "opacity-100" : "opacity-0"}`} />
+                              — Unassigned —
+                            </CommandItem>
+                            {users.map((u: any) => (
+                              <CommandItem
+                                key={u.id}
+                                value={`${u.name} ${u.empId} ${u.id}`}
+                                onSelect={() => {
+                                  set("assignedTo", u.id);
+                                  setUserSearchOpen(false);
+                                }}
+                              >
+                                <Check className={`mr-2 size-4 ${form.assignedTo === u.id ? "opacity-100" : "opacity-0"}`} />
+                                {u.name} ({u.empId})
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </Field>
               )}
             </div>
